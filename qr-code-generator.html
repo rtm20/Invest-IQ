@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator - AI Startup Analyst</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        #qrcode {
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        .url-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .tech-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .print-button {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 10px;
+            font-size: 1rem;
+        }
+        .print-button:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s;
+        }
+        @media print {
+            body { background: white; color: black; }
+            .container { background: white; border: 2px solid #667eea; }
+            .print-button { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Startup Analyst</h1>
+        <p class="subtitle">Google Cloud Hackathon 2024 - Live Demo</p>
+        
+        <div class="tech-stack">
+            <span class="tech-item">🔍 Google Vision API</span>
+            <span class="tech-item">🧠 Vertex AI</span>
+            <span class="tech-item">⚡ Next.js 14</span>
+            <span class="tech-item">☁️ Vercel</span>
+        </div>
+
+        <div id="qrcode"></div>
+        
+        <div class="url-display">
+            <strong>Live Demo URL:</strong><br>
+            https://ai-startup-analyst-g4uoipq4r-ritesh-meenas-projects.vercel.app
+        </div>
+
+        <div class="instructions">
+            <h3>📱 For Video Recording:</h3>
+            <ul>
+                <li><strong>Screenshot this QR code</strong> for your video ending</li>
+                <li><strong>Include the URL</strong> in your video description</li>
+                <li><strong>Test the demo</strong> before recording</li>
+                <li><strong>Show live features:</strong> Upload → AI Analysis → Report Generation</li>
+            </ul>
+
+            <h3>🎬 Video Tips:</h3>
+            <ul>
+                <li><strong>Start with the problem</strong> (investment due diligence challenges)</li>
+                <li><strong>Show live demo</strong> of your application</li>
+                <li><strong>Highlight Google Cloud integration</strong> (Vision API + Vertex AI)</li>
+                <li><strong>End with QR code</strong> and call to action</li>
+            </ul>
+
+            <h3>🏆 Key Features to Demo:</h3>
+            <ul>
+                <li>✅ Document upload and processing</li>
+                <li>✅ AI-powered analysis dashboard</li>
+                <li>✅ Interactive charts and metrics</li>
+                <li>✅ Professional PDF export</li>
+                <li>✅ Real-time processing simulation</li>
+            </ul>
+        </div>
+
+        <button class="print-button" onclick="window.print()">🖨️ Print QR Code</button>
+        <button class="print-button" onclick="downloadQR()">💾 Download QR Code</button>
+    </div>
+
+    <script>
+        // Generate QR Code
+        const url = 'https://ai-startup-analyst-g4uoipq4r-ritesh-meenas-projects.vercel.app';
+        
+        QRCode.toCanvas(document.getElementById('qrcode'), url, {
+            width: 256,
+            height: 256,
+            colorDark: '#667eea',
+            colorLight: '#ffffff',
+            margin: 2,
+            errorCorrectionLevel: 'M'
+        }, function (error) {
+            if (error) console.error(error);
+            console.log('QR code generated successfully!');
+        });
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            const link = document.createElement('a');
+            link.download = 'ai-startup-analyst-qr-code.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        .download { margin: 10px; padding: 10px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2>InvestIQ Favicon Generator</h2>
+    <canvas id="favicon16" width="16" height="16"></canvas>
+    <canvas id="favicon32" width="32" height="32"></canvas>
+    <canvas id="favicon64" width="64" height="64"></canvas>
+    
+    <script>
+        function drawFavicon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#3b82f6');
+            gradient.addColorStop(0.5, '#6366f1');
+            gradient.addColorStop(1, '#8b5cf6');
+            
+            // Draw background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, (size-2)/2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw border
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Draw chart line
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = Math.max(1, size/16);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(size * 0.2, size * 0.7);
+            ctx.lineTo(size * 0.35, size * 0.5);
+            ctx.lineTo(size * 0.5, size * 0.6);
+            ctx.lineTo(size * 0.65, size * 0.3);
+            ctx.lineTo(size * 0.8, size * 0.4);
+            ctx.stroke();
+            
+            // Draw chart points
+            ctx.fillStyle = 'white';
+            const pointSize = Math.max(1, size/16);
+            
+            const points = [
+                [size * 0.2, size * 0.7],
+                [size * 0.35, size * 0.5],
+                [size * 0.5, size * 0.6],
+                [size * 0.65, size * 0.3],
+                [size * 0.8, size * 0.4]
+            ];
+            
+            points.forEach(([x, y]) => {
+                ctx.beginPath();
+                ctx.arc(x, y, pointSize, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw simple "IQ" indicator (for larger sizes)
+            if (size >= 32) {
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size/4}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('IQ', size/2, size * 0.25);
+            }
+        }
+        
+        // Draw favicons
+        drawFavicon(document.getElementById('favicon16'), 16);
+        drawFavicon(document.getElementById('favicon32'), 32);
+        drawFavicon(document.getElementById('favicon64'), 64);
+        
+        // Function to download canvas as ICO
+        function downloadAsICO() {
+            const canvas32 = document.getElementById('favicon32');
+            const link = document.createElement('a');
+            link.download = 'favicon.ico';
+            link.href = canvas32.toDataURL('image/png');
+            link.click();
+        }
+        
+        function downloadAsPNG(size) {
+            const canvas = document.getElementById(`favicon${size}`);
+            const link = document.createElement('a');
+            link.download = `favicon-${size}x${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+    
+    <div>
+        <a href="javascript:downloadAsPNG(16)" class="download">Download 16x16 PNG</a>
+        <a href="javascript:downloadAsPNG(32)" class="download">Download 32x32 PNG</a>
+        <a href="javascript:downloadAsICO()" class="download">Download ICO</a>
+    </div>
+</body>
+</html>
