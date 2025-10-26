@@ -1,0 +1,20 @@
+# Development configuration - Copy to .env.local for your actual settings
+
+# Mode Configuration - REAL AI ENABLED (Phase 2 with GCP Credits)
+NEXT_PUBLIC_ENABLE_REAL_AI=true
+ENABLE_REAL_AI=true
+NEXT_PUBLIC_ENABLE_MOCK_MODE=false
+NEXT_PUBLIC_ENABLE_DEBUG_LOGS=true
+
+# Google Cloud Configuration (REAL PROJECT VALUES - Ready for billing)
+GOOGLE_CLOUD_PROJECT_ID=ai-startup-analyst-hackathon
+GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_CLOUD_BUCKET=ai-startup-analyst-docs
+
+# Google Cloud Authentication (ACTIVATED - Real API Key)
+GOOGLE_APPLICATION_CREDENTIALS=./google-cloud-key.json
+
+# Application Settings
+NODE_ENV=development
+NEXT_PUBLIC_APP_NAME=AI Startup Analyst
+NEXT_PUBLIC_APP_VERSION=2.0.0
