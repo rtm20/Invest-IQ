@@ -135,8 +135,20 @@ let visionClient: ImageAnnotatorClient;
 let vertex_ai: VertexAI;
 
 try {
+  console.log('🚀 Initializing Google Cloud services...');
+  
   // Get Google Cloud credentials using our helper function
   const clientOptions = getGoogleCloudCredentials();
+  
+  if (!clientOptions) {
+    throw new Error('No credentials available. Please check environment variables.');
+  }
+
+  console.log('📝 Client options:', {
+    hasCredentials: !!clientOptions.credentials,
+    hasKeyFilename: !!clientOptions.keyFilename,
+    projectId: clientOptions.projectId || projectId,
+  });
 
   // Initialize Storage client
   storage = new Storage({
