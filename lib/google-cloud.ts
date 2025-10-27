@@ -6,18 +6,41 @@ const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
 // Environment configuration
-const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || 'ai-startup-analyst';
+const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_PROJECT_ID || 'ai-startup-analyst-hackathon';
 const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
 // Helper function to get Google Cloud credentials
 function getGoogleCloudCredentials() {
   // Priority:
-  // 1. Individual environment variables
-  // 2. JSON credentials string
+  // 1. JSON credentials string
+  // 2. Individual environment variables
   // 3. Local credentials file
   // 4. Application Default Credentials
 
-  // Check for individual credential fields
+  // Check for JSON credentials first
+  if (process.env.GOOGLE_CREDENTIALS_JSON) {
+    try {
+      const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+      return {
+        credentials: parsed,
+        projectId: parsed.project_id || projectId,
+      };
+    } catch (e) {
+      // Try base64 decode
+      try {
+        const decoded = Buffer.from(process.env.GOOGLE_CREDENTIALS_JSON, 'base64').toString();
+        const parsed = JSON.parse(decoded);
+        return {
+          credentials: parsed,
+          projectId: parsed.project_id || projectId,
+        };
+      } catch (e2) {
+        console.error('Failed to parse GOOGLE_CREDENTIALS_JSON:', e2);
+      }
+    }
+  }
+
+  // Fallback to individual credential fields
   if (process.env.GOOGLE_CLIENT_EMAIL && 
       process.env.GOOGLE_PRIVATE_KEY && 
       process.env.GOOGLE_PROJECT_ID) {
