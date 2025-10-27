@@ -166,7 +166,20 @@ try {
   vertex_ai = new VertexAI({
     project: projectId,
     location: location,
-    ...(clientOptions.credentials ? { credentials: clientOptions.credentials } : {})
+    googleAuthOptions: {
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+      credentials: clientOptions.credentials,
+      projectId: clientOptions.projectId || projectId
+    }
+  });
+
+  // Log Vertex AI configuration
+  console.log('📝 Vertex AI configuration:', {
+    project: projectId,
+    location: location,
+    hasCredentials: !!clientOptions.credentials,
+    hasGoogleAuthOptions: true,
+    scopes: ['https://www.googleapis.com/auth/cloud-platform']
   });
 
   console.log('✅ Google Cloud services initialized successfully');
