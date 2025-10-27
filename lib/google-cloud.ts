@@ -11,6 +11,8 @@ const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
 // Helper function to get Google Cloud credentials
 function getGoogleCloudCredentials() {
+  console.log('🔍 Checking Google Cloud credentials...');
+
   // Priority:
   // 1. JSON credentials string
   // 2. Individual environment variables
@@ -19,25 +21,52 @@ function getGoogleCloudCredentials() {
 
   // Check for JSON credentials first
   if (process.env.GOOGLE_CREDENTIALS_JSON) {
+    console.log('📦 Found GOOGLE_CREDENTIALS_JSON');
+    
     try {
+      // Try direct JSON parse first
       const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+      console.log('✅ Successfully parsed credentials JSON directly');
+      console.log('Project ID:', parsed.project_id);
+      console.log('Client Email:', parsed.client_email);
+      console.log('Has Private Key:', !!parsed.private_key);
+      
       return {
         credentials: parsed,
         projectId: parsed.project_id || projectId,
       };
     } catch (e) {
+      console.log('⚠️ Direct JSON parse failed, trying base64 decode...');
+      
       // Try base64 decode
       try {
         const decoded = Buffer.from(process.env.GOOGLE_CREDENTIALS_JSON, 'base64').toString();
-        const parsed = JSON.parse(decoded);
-        return {
-          credentials: parsed,
-          projectId: parsed.project_id || projectId,
-        };
+        console.log('✅ Successfully decoded base64');
+        
+        try {
+          const parsed = JSON.parse(decoded);
+          console.log('✅ Successfully parsed decoded JSON');
+          console.log('Project ID:', parsed.project_id);
+          console.log('Client Email:', parsed.client_email);
+          console.log('Has Private Key:', !!parsed.private_key);
+          
+          return {
+            credentials: parsed,
+            projectId: parsed.project_id || projectId,
+          };
+        } catch (parseError) {
+          console.error('❌ Failed to parse decoded JSON:', parseError);
+          console.log('Decoded content preview:', decoded.substring(0, 100) + '...');
+        }
       } catch (e2) {
-        console.error('Failed to parse GOOGLE_CREDENTIALS_JSON:', e2);
+        console.error('❌ Failed to decode base64:', e2);
+        // Log first few characters of the raw input for debugging
+        console.log('Raw credential string preview:', 
+          process.env.GOOGLE_CREDENTIALS_JSON.substring(0, 50) + '...');
       }
     }
+  } else {
+    console.log('⚠️ GOOGLE_CREDENTIALS_JSON not found');
   }
 
   // Fallback to individual credential fields
