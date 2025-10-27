@@ -9,28 +9,100 @@ const mammoth = require('mammoth');
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || 'ai-startup-analyst';
 const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
+// Helper function to get Google Cloud credentials
+function getGoogleCloudCredentials() {
+  // Priority:
+  // 1. Individual environment variables
+  // 2. JSON credentials string
+  // 3. Local credentials file
+  // 4. Application Default Credentials
+
+  // Check for individual credential fields
+  if (process.env.GOOGLE_CLIENT_EMAIL && 
+      process.env.GOOGLE_PRIVATE_KEY && 
+      process.env.GOOGLE_PROJECT_ID) {
+    
+    // Convert literal \n to actual newlines in private key if needed
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    
+    return {
+      credentials: {
+        type: process.env.GOOGLE_TYPE || 'service_account',
+        project_id: process.env.GOOGLE_PROJECT_ID,
+        private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+        private_key: privateKey,
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        auth_uri: process.env.GOOGLE_AUTH_URI || 'https://accounts.google.com/o/oauth2/auth',
+        token_uri: process.env.GOOGLE_TOKEN_URI || 'https://oauth2.googleapis.com/token',
+        auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL || 'https://www.googleapis.com/oauth2/v1/certs',
+        client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL
+      },
+      projectId: process.env.GOOGLE_PROJECT_ID,
+    };
+  }
+
+  // Check for JSON credentials
+  if (process.env.GOOGLE_CREDENTIALS_JSON) {
+    try {
+      const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+      return {
+        credentials: parsed,
+        projectId: parsed.project_id || projectId,
+      };
+    } catch (e) {
+      // Try base64 decode
+      try {
+        const decoded = Buffer.from(process.env.GOOGLE_CREDENTIALS_JSON, 'base64').toString();
+        const parsed = JSON.parse(decoded);
+        return {
+          credentials: parsed,
+          projectId: parsed.project_id || projectId,
+        };
+      } catch (e2) {
+        throw new Error('Invalid GOOGLE_CREDENTIALS_JSON format');
+      }
+    }
+  }
+
+  // Check for local credentials file
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    return {
+      keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      projectId,
+    };
+  }
+
+  // Fall back to Application Default Credentials
+  return {};
+}
+
 // Initialize Google Cloud clients
 let storage: Storage;
 let visionClient: ImageAnnotatorClient;
 let vertex_ai: VertexAI;
 
 try {
-  // Initialize with service account key or default credentials
-  const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS ? 
-    { keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS } : 
-    {}; // Use default credentials in production
+  // Get Google Cloud credentials using our helper function
+  const clientOptions = getGoogleCloudCredentials();
 
+  // Initialize Storage client
   storage = new Storage({
-    projectId,
-    ...credentials,
+    projectId: clientOptions.projectId || projectId,
+    ...(clientOptions.keyFilename ? { keyFilename: clientOptions.keyFilename } : {}),
+    ...(clientOptions.credentials ? { credentials: clientOptions.credentials } : {}),
   });
 
-  visionClient = new ImageAnnotatorClient(credentials);
+  // Initialize Vision API client
+  visionClient = new ImageAnnotatorClient(
+    clientOptions.keyFilename || clientOptions.credentials ? clientOptions : undefined
+  );
 
   // Initialize Vertex AI for Gemini
   vertex_ai = new VertexAI({
     project: projectId,
     location: location,
+    ...(clientOptions.credentials ? { credentials: clientOptions.credentials } : {})
   });
 
   console.log('✅ Google Cloud services initialized successfully');
