@@ -140,7 +140,7 @@ export function UploadSection({ onAnalysisComplete }: UploadSectionProps) {
         documents: [{
           id: uploadResult.document?.id || `doc-${Date.now()}`,
           name: uploadResult.document?.name || mainFile.name,
-          type: 'document' as const,
+          type: 'other' as const,
           url: uploadResult.document?.url || '',
           uploadedAt: new Date(uploadResult.document?.uploadedAt || Date.now()),
           processed: uploadResult.document?.processed || true,
