@@ -88,12 +88,33 @@ interface ConsolidatedData {
   }>;
 }
 
+export const config = {
+  api: {
+    bodyParser: false,
+    sizeLimit: '100mb',
+  },
+};
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Starting multi-document upload and analysis...');
     const startTime = Date.now();
+    
+    // Define size limits
+    const MAX_REQUEST_SIZE = 100 * 1024 * 1024; // 100MB total request size
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;     // 50MB per file
+    
+    // Check content length
+    const contentLength = parseInt(request.headers.get('content-length') || '0');
+    
+    if (contentLength > MAX_REQUEST_SIZE) {
+      return NextResponse.json(
+        { error: 'Request too large. Maximum total size is 100MB' },
+        { status: 413 }
+      );
+    }
 
-    // Parse uploaded files
+    // Parse uploaded files with streaming
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     
@@ -113,18 +134,16 @@ export async function POST(request: NextRequest) {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain'
     ];
-    
-    const maxSize = 50 * 1024 * 1024; // 50MB
     const validFiles = files.filter(file => {
       const isValidType = allowedTypes.includes(file.type) || 
         /\.(pdf|pptx|docx|txt)$/i.test(file.name);
-      const isValidSize = file.size <= maxSize;
+      const isValidSize = file.size <= MAX_FILE_SIZE;
       
       if (!isValidType) {
         console.warn(`⚠️ Unsupported file type: ${file.name}`);
       }
       if (!isValidSize) {
-        console.warn(`⚠️ File too large: ${file.name}`);
+        console.warn(`⚠️ File too large: ${file.name} (max ${MAX_FILE_SIZE / (1024 * 1024)}MB)`);
       }
       
       return isValidType && isValidSize;

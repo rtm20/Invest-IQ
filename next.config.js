@@ -16,6 +16,12 @@ const nextConfig = {
     }
     return config;
   },
+  api: {
+    bodyParser: {
+      sizeLimit: '100mb',
+    },
+    responseLimit: '100mb',
+  },
   images: {
     domains: ['storage.googleapis.com'],
   },
