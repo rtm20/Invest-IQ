@@ -88,9 +88,6 @@ interface ConsolidatedData {
   }>;
 }
 
-// Configure route segment for Next.js
-export const dynamic = 'force-dynamic';
-
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Starting multi-document upload and analysis...');
