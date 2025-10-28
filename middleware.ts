@@ -2,12 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export const config = {
-  matcher: [
-    '/api/multi-document-analyze',
-    '/api/analyze',
-    '/api/extract-text',
-    '/api/upload'
-  ]
+  // Use a catch-all matcher for all API routes so middleware runs consistently
+  matcher: ['/api/:path*']
 };
 
 export function middleware(request: NextRequest) {

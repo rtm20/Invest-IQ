@@ -88,13 +88,13 @@ interface ConsolidatedData {
   }>;
 }
 
-// Configure route segment
+// Configure route segment for Next.js
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // 5 minutes timeout
+export const maxDuration = 10; // 10 seconds for Hobby plan
 export const runtime = 'nodejs';
 
-// Note: Vercel has a 4.5MB body size limit on Hobby plan, 100MB on Pro
-// For larger files, consider using direct cloud storage upload with signed URLs
+// Note: Vercel Hobby plan has a 4.5MB body size limit
+// For larger files, consider upgrading to Pro or implementing direct cloud storage upload
 
 export async function POST(request: NextRequest) {
   try {

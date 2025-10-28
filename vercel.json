@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "app/api/*/route.ts": {
-      "maxDuration": 10,
-      "memory": 1024
-    }
-  },
   "env": {
     "NEXT_PUBLIC_ENABLE_REAL_AI": "false",
     "NEXT_PUBLIC_ENABLE_MOCK_MODE": "true",
