@@ -90,8 +90,6 @@ interface ConsolidatedData {
 
 // Configure route segment for Next.js
 export const dynamic = 'force-dynamic';
-export const maxDuration = 10; // 10 seconds for Hobby plan
-export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
