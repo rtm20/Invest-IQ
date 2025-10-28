@@ -93,35 +93,12 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 10; // 10 seconds for Hobby plan
 export const runtime = 'nodejs';
 
-// Note: Vercel Hobby plan has a 4.5MB body size limit
-// For larger files, consider upgrading to Pro or implementing direct cloud storage upload
-
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Starting multi-document upload and analysis...');
     const startTime = Date.now();
-    
-    // Define size limits (adjusted for Vercel limits)
-    const MAX_REQUEST_SIZE = 4 * 1024 * 1024;  // 4MB for Vercel Hobby plan
-    const MAX_FILE_SIZE = 3 * 1024 * 1024;      // 3MB per file for safety
-    
-    // Check content length
-    const contentLength = parseInt(request.headers.get('content-length') || '0');
-    
-    if (contentLength > MAX_REQUEST_SIZE) {
-      return NextResponse.json(
-        { 
-          error: 'Request too large for current plan',
-          details: `Total request size (${Math.round(contentLength / (1024 * 1024))}MB) exceeds limit (${MAX_REQUEST_SIZE / (1024 * 1024)}MB)`,
-          suggestion: 'Please upload files smaller than 3MB each, or upgrade to Vercel Pro for larger file support',
-          limit: `${MAX_REQUEST_SIZE / (1024 * 1024)}MB`,
-          received: `${Math.round(contentLength / (1024 * 1024))}MB`
-        },
-        { status: 413 }
-      );
-    }
 
-    // Parse uploaded files with streaming
+    // Parse uploaded files
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     
@@ -141,19 +118,16 @@ export async function POST(request: NextRequest) {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain'
     ];
+    
     const validFiles = files.filter(file => {
       const isValidType = allowedTypes.includes(file.type) || 
         /\.(pdf|pptx|docx|txt)$/i.test(file.name);
-      const isValidSize = file.size <= MAX_FILE_SIZE;
       
       if (!isValidType) {
         console.warn(`⚠️ Unsupported file type: ${file.name}`);
       }
-      if (!isValidSize) {
-        console.warn(`⚠️ File too large: ${file.name} (max ${MAX_FILE_SIZE / (1024 * 1024)}MB)`);
-      }
       
-      return isValidType && isValidSize;
+      return isValidType;
     });
 
     if (validFiles.length === 0) {
@@ -263,9 +237,6 @@ export async function GET() {
     description: 'Upload multiple documents for comprehensive startup analysis',
     usage: 'POST with multipart/form-data containing files array',
     supportedFormats: ['PDF', 'PPTX', 'DOCX', 'TXT'],
-    maxFileSize: '3MB per file',
-    maxTotalSize: '4MB total (Vercel Hobby plan limit)',
-    note: 'For larger files, please contact support or upgrade to Pro plan',
     features: [
       'Multi-document text extraction',
       'AI-powered data consolidation',
