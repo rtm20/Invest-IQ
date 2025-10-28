@@ -114,8 +114,10 @@ function writeCredsToTmpAndReturn(parsed: any) {
       console.log('🗂️ Temp credentials file already exists:', filePath);
     }
 
-    // Ensure ADC picks it up
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = filePath;
+    // Set environment variable for Application Default Credentials
+    // Using bracket notation to avoid webpack substitution
+    const envKey = 'GOOGLE_APPLICATION_CREDENTIALS';
+    process.env[envKey] = filePath;
 
     return {
       credentials: parsed,

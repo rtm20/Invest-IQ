@@ -35,7 +35,7 @@ next-env.d.ts
 
 # Google Cloud
 google-cloud-key.json
-**/google-cloud-key.json
+**/google-cloud-key
 credentials.json
 **/credentials.json
 service-account*.json

@@ -88,13 +88,12 @@ interface ConsolidatedData {
   }>;
 }
 
-export const config = {
-  api: {
-    bodyParser: false,
-    sizeLimit: '100mb',
-  },
-};
+// Configure route segment
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // 5 minutes timeout
+export const runtime = 'nodejs';
 
+// Configure body size limits
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Starting multi-document upload and analysis...');

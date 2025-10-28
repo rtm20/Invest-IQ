@@ -14,13 +14,16 @@ const nextConfig = {
         path: false,
       };
     }
+    
+    // Exclude google-cloud-key.json from webpack processing
+    config.module = config.module || {};
+    config.module.rules = config.module.rules || [];
+    config.module.rules.push({
+      test: /google-cloud-key\.json$/,
+      type: 'asset/resource',
+    });
+    
     return config;
-  },
-  api: {
-    bodyParser: {
-      sizeLimit: '100mb',
-    },
-    responseLimit: '100mb',
   },
   images: {
     domains: ['storage.googleapis.com'],
