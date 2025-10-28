@@ -26,15 +26,16 @@ export function middleware(request: NextRequest) {
   // Check content length for POST requests
   if (request.method === 'POST') {
     const contentLength = parseInt(request.headers.get('content-length') || '0');
-    const MAX_SIZE = 50 * 1024 * 1024; // 50MB per file
-    const TOTAL_MAX_SIZE = 100 * 1024 * 1024; // 100MB total
+    const MAX_FILE_SIZE = 3 * 1024 * 1024;     // 3MB per file
+    const TOTAL_MAX_SIZE = 4 * 1024 * 1024;    // 4MB total (Vercel Hobby limit)
 
     if (contentLength > TOTAL_MAX_SIZE) {
       return NextResponse.json(
         { 
           error: 'Request too large',
-          details: 'Total request size exceeds 100MB limit',
-          limit: '100MB',
+          details: `Total request size exceeds the ${TOTAL_MAX_SIZE / (1024 * 1024)}MB limit for Vercel Hobby plan`,
+          suggestion: 'Please upload smaller files (max 3MB each) or upgrade to Vercel Pro',
+          limit: `${TOTAL_MAX_SIZE / (1024 * 1024)}MB`,
           received: `${Math.round(contentLength / (1024 * 1024))}MB`
         },
         { 

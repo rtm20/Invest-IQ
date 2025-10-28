@@ -93,22 +93,30 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes timeout
 export const runtime = 'nodejs';
 
-// Configure body size limits
+// Note: Vercel has a 4.5MB body size limit on Hobby plan, 100MB on Pro
+// For larger files, consider using direct cloud storage upload with signed URLs
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Starting multi-document upload and analysis...');
     const startTime = Date.now();
     
-    // Define size limits
-    const MAX_REQUEST_SIZE = 100 * 1024 * 1024; // 100MB total request size
-    const MAX_FILE_SIZE = 50 * 1024 * 1024;     // 50MB per file
+    // Define size limits (adjusted for Vercel limits)
+    const MAX_REQUEST_SIZE = 4 * 1024 * 1024;  // 4MB for Vercel Hobby plan
+    const MAX_FILE_SIZE = 3 * 1024 * 1024;      // 3MB per file for safety
     
     // Check content length
     const contentLength = parseInt(request.headers.get('content-length') || '0');
     
     if (contentLength > MAX_REQUEST_SIZE) {
       return NextResponse.json(
-        { error: 'Request too large. Maximum total size is 100MB' },
+        { 
+          error: 'Request too large for current plan',
+          details: `Total request size (${Math.round(contentLength / (1024 * 1024))}MB) exceeds limit (${MAX_REQUEST_SIZE / (1024 * 1024)}MB)`,
+          suggestion: 'Please upload files smaller than 3MB each, or upgrade to Vercel Pro for larger file support',
+          limit: `${MAX_REQUEST_SIZE / (1024 * 1024)}MB`,
+          received: `${Math.round(contentLength / (1024 * 1024))}MB`
+        },
         { status: 413 }
       );
     }
@@ -255,7 +263,9 @@ export async function GET() {
     description: 'Upload multiple documents for comprehensive startup analysis',
     usage: 'POST with multipart/form-data containing files array',
     supportedFormats: ['PDF', 'PPTX', 'DOCX', 'TXT'],
-    maxFileSize: '50MB per file',
+    maxFileSize: '3MB per file',
+    maxTotalSize: '4MB total (Vercel Hobby plan limit)',
+    note: 'For larger files, please contact support or upgrade to Pro plan',
     features: [
       'Multi-document text extraction',
       'AI-powered data consolidation',

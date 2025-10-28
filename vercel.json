@@ -1,15 +1,11 @@
 {
   "version": 2,
-  "name": "ai-startup-analyst",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
+  "functions": {
+    "app/api/*/route.ts": {
+      "maxDuration": 10,
+      "memory": 1024
     }
-  ],
+  },
   "env": {
     "NEXT_PUBLIC_ENABLE_REAL_AI": "false",
     "NEXT_PUBLIC_ENABLE_MOCK_MODE": "true",
