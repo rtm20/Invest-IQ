@@ -2,6 +2,9 @@
 import { Storage } from '@google-cloud/storage';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { VertexAI } from '@google-cloud/vertexai';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
@@ -23,48 +26,36 @@ function getGoogleCloudCredentials() {
   if (process.env.GOOGLE_CREDENTIALS_JSON) {
     console.log('📦 Found GOOGLE_CREDENTIALS_JSON');
     
-    try {
-      // Try direct JSON parse first
-      const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-      console.log('✅ Successfully parsed credentials JSON directly');
-      console.log('Project ID:', parsed.project_id);
-      console.log('Client Email:', parsed.client_email);
-      console.log('Has Private Key:', !!parsed.private_key);
-      
-      return {
-        credentials: parsed,
-        projectId: parsed.project_id || projectId,
-      };
-    } catch (e) {
-      console.log('⚠️ Direct JSON parse failed, trying base64 decode...');
-      
-      // Try base64 decode
       try {
-        const decoded = Buffer.from(process.env.GOOGLE_CREDENTIALS_JSON, 'base64').toString();
-        console.log('✅ Successfully decoded base64');
-        
+        const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        return writeCredsToTmpAndReturn(parsed);
+      } catch (e) {
+        console.log('⚠️ Direct JSON parse failed, trying base64 decode...');
+
+        // Try base64 decode
         try {
-          const parsed = JSON.parse(decoded);
-          console.log('✅ Successfully parsed decoded JSON');
-          console.log('Project ID:', parsed.project_id);
-          console.log('Client Email:', parsed.client_email);
-          console.log('Has Private Key:', !!parsed.private_key);
-          
-          return {
-            credentials: parsed,
-            projectId: parsed.project_id || projectId,
-          };
-        } catch (parseError) {
-          console.error('❌ Failed to parse decoded JSON:', parseError);
-          console.log('Decoded content preview:', decoded.substring(0, 100) + '...');
+          const decoded = Buffer.from(process.env.GOOGLE_CREDENTIALS_JSON, 'base64').toString();
+          console.log('✅ Successfully decoded base64');
+
+          try {
+            const parsed = JSON.parse(decoded);
+            console.log('✅ Successfully parsed decoded JSON');
+            console.log('Project ID:', parsed.project_id);
+            console.log('Client Email:', parsed.client_email);
+            console.log('Has Private Key:', !!parsed.private_key);
+
+            return writeCredsToTmpAndReturn(parsed);
+          } catch (parseError) {
+            console.error('❌ Failed to parse decoded JSON:', parseError);
+            console.log('Decoded content preview:', decoded.substring(0, 100) + '...');
+          }
+        } catch (e2) {
+          console.error('❌ Failed to decode base64:', e2);
+          // Log first few characters of the raw input for debugging
+          console.log('Raw credential string preview:', 
+            process.env.GOOGLE_CREDENTIALS_JSON.substring(0, 50) + '...');
         }
-      } catch (e2) {
-        console.error('❌ Failed to decode base64:', e2);
-        // Log first few characters of the raw input for debugging
-        console.log('Raw credential string preview:', 
-          process.env.GOOGLE_CREDENTIALS_JSON.substring(0, 50) + '...');
       }
-    }
   } else {
     console.log('⚠️ GOOGLE_CREDENTIALS_JSON not found');
   }
@@ -94,29 +85,6 @@ function getGoogleCloudCredentials() {
     };
   }
 
-  // Check for JSON credentials
-  if (process.env.GOOGLE_CREDENTIALS_JSON) {
-    try {
-      const parsed = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-      return {
-        credentials: parsed,
-        projectId: parsed.project_id || projectId,
-      };
-    } catch (e) {
-      // Try base64 decode
-      try {
-        const decoded = Buffer.from(process.env.GOOGLE_CREDENTIALS_JSON, 'base64').toString();
-        const parsed = JSON.parse(decoded);
-        return {
-          credentials: parsed,
-          projectId: parsed.project_id || projectId,
-        };
-      } catch (e2) {
-        throw new Error('Invalid GOOGLE_CREDENTIALS_JSON format');
-      }
-    }
-  }
-
   // Check for local credentials file
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     return {
@@ -127,6 +95,40 @@ function getGoogleCloudCredentials() {
 
   // Fall back to Application Default Credentials
   return {};
+}
+
+/**
+ * Write the parsed service account JSON to a temp file and return client options
+ */
+function writeCredsToTmpAndReturn(parsed: any) {
+  try {
+    const tmpDir = os.tmpdir();
+    const fileName = `gcloud-creds-${parsed.project_id || 'project'}-key.json`;
+    const filePath = path.join(tmpDir, fileName);
+
+    // Write file only if it doesn't already exist to avoid repeated writes
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify(parsed));
+      console.log('🗂️ Wrote Google credentials to temp file:', filePath);
+    } else {
+      console.log('🗂️ Temp credentials file already exists:', filePath);
+    }
+
+    // Ensure ADC picks it up
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = filePath;
+
+    return {
+      credentials: parsed,
+      keyFilename: filePath,
+      projectId: parsed.project_id || projectId,
+    };
+  } catch (err) {
+    console.error('❌ Failed to write temp credentials file:', err);
+    return {
+      credentials: parsed,
+      projectId: parsed.project_id || projectId,
+    };
+  }
 }
 
 // Initialize Google Cloud clients
@@ -144,22 +146,25 @@ try {
     throw new Error('No credentials available. Please check environment variables.');
   }
 
+  // Normalize for safer access in TypeScript checks
+  const co: any = clientOptions as any || {};
+
   console.log('📝 Client options:', {
-    hasCredentials: !!clientOptions.credentials,
-    hasKeyFilename: !!clientOptions.keyFilename,
-    projectId: clientOptions.projectId || projectId,
+    hasCredentials: !!co.credentials,
+    hasKeyFilename: !!co.keyFilename,
+    projectId: co.projectId || projectId,
   });
 
   // Initialize Storage client
   storage = new Storage({
-    projectId: clientOptions.projectId || projectId,
-    ...(clientOptions.keyFilename ? { keyFilename: clientOptions.keyFilename } : {}),
-    ...(clientOptions.credentials ? { credentials: clientOptions.credentials } : {}),
+    projectId: co.projectId || projectId,
+    ...(co.keyFilename ? { keyFilename: co.keyFilename } : {}),
+    ...(co.credentials ? { credentials: co.credentials } : {}),
   });
 
   // Initialize Vision API client
   visionClient = new ImageAnnotatorClient(
-    clientOptions.keyFilename || clientOptions.credentials ? clientOptions : undefined
+    co.keyFilename || co.credentials ? co : undefined
   );
 
   // Initialize Vertex AI for Gemini
@@ -168,8 +173,8 @@ try {
     location: location,
     googleAuthOptions: {
       scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      credentials: clientOptions.credentials,
-      projectId: clientOptions.projectId || projectId
+      credentials: co.credentials,
+      projectId: co.projectId || projectId
     }
   });
 
@@ -177,7 +182,7 @@ try {
   console.log('📝 Vertex AI configuration:', {
     project: projectId,
     location: location,
-    hasCredentials: !!clientOptions.credentials,
+    hasCredentials: !!co.credentials,
     hasGoogleAuthOptions: true,
     scopes: ['https://www.googleapis.com/auth/cloud-platform']
   });
