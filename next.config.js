@@ -6,12 +6,23 @@ const nextConfig = {
     GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
   },
   webpack: (config, { isServer }) => {
-    // Handle PDF parsing
+    // Handle client-only libraries - don't bundle them for server
+    if (isServer) {
+      config.resolve = config.resolve || {};
+      config.resolve.alias = config.resolve.alias || {};
+      
+      // Point server-side imports to empty modules
+      config.resolve.alias['pdfjs-dist'] = false;
+      config.resolve.alias['mammoth'] = false;
+    }
+    
+    // Handle PDF parsing on client side
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         path: false,
+        canvas: false,
       };
     }
     
@@ -21,6 +32,12 @@ const nextConfig = {
     config.module.rules.push({
       test: /google-cloud-key\.json$/,
       type: 'asset/resource',
+    });
+    
+    // Ignore node-specific modules in browser
+    config.module.rules.push({
+      test: /\.node$/,
+      use: 'node-loader',
     });
     
     return config;

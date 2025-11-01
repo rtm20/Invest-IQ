@@ -5,6 +5,7 @@ import { VertexAI } from '@google-cloud/vertexai';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { fileCompressor } from './file-compressor';
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
@@ -289,11 +290,11 @@ export const visionService = {
         
         case 'pptx':
           // For PPTX, still use Vision API as it's image-heavy
-          return await this.extractTextWithVisionAPI(buffer);
+          return await this.extractTextWithVisionAPI(buffer, filename);
         
         default:
           // Default to Vision API for unknown types
-          return await this.extractTextWithVisionAPI(buffer);
+          return await this.extractTextWithVisionAPI(buffer, filename);
       }
     } catch (error) {
       console.error('❌ Text extraction error:', error);
@@ -301,7 +302,7 @@ export const visionService = {
       // Fallback to Vision API if other methods fail
       try {
         console.log('🔄 Trying Vision API as fallback...');
-        return await this.extractTextWithVisionAPI(buffer);
+        return await this.extractTextWithVisionAPI(buffer, filename);
       } catch (visionError) {
         console.error('❌ Vision API fallback also failed:', visionError);
         return ''; // Return empty string instead of throwing
@@ -312,13 +313,20 @@ export const visionService = {
   /**
    * Extract text using Vision API (for images, PPTX, or fallback)
    */
-  async extractTextWithVisionAPI(buffer: Buffer): Promise<string> {
+  async extractTextWithVisionAPI(buffer: Buffer, filename?: string): Promise<string> {
     try {
       console.log('🔍 Extracting text using Google Vision API...');
 
+      // Compress file if needed (Vision API has 4.5MB limit for inline content)
+      const compressionResult = await fileCompressor.compressIfNeeded(buffer, filename);
+      
+      if (compressionResult.method !== 'none') {
+        console.log(`📦 Applied compression: ${compressionResult.method} (${(compressionResult.originalSize / 1024 / 1024).toFixed(2)} MB → ${(compressionResult.compressedSize / 1024 / 1024).toFixed(2)} MB)`);
+      }
+
       const [result] = await visionClient.documentTextDetection({
         image: {
-          content: buffer.toString('base64'),
+          content: compressionResult.buffer.toString('base64'),
         },
       });
 
@@ -330,7 +338,7 @@ export const visionService = {
         // Fallback to regular text detection
         const [textResult] = await visionClient.textDetection({
           image: {
-            content: buffer.toString('base64'),
+            content: compressionResult.buffer.toString('base64'),
           },
         });
         
@@ -388,7 +396,7 @@ export const visionService = {
       // If pdf-parse didn't extract much text, fallback to Vision API
       if (text.length < 50) {
         console.log('⚠️ PDF text extraction yielded minimal text, trying Vision API...');
-        return await this.extractTextWithVisionAPI(buffer);
+        return await this.extractTextWithVisionAPI(buffer, 'document.pdf');
       }
       
       return text;
@@ -398,7 +406,7 @@ export const visionService = {
       // Fallback to Vision API if pdf-parse fails
       try {
         console.log('🔄 Fallback to Vision API for PDF...');
-        return await this.extractTextWithVisionAPI(buffer);
+        return await this.extractTextWithVisionAPI(buffer, 'document.pdf');
       } catch (visionError) {
         console.error('❌ PDF Vision API fallback failed:', visionError);
         throw new Error(`PDF text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -647,8 +655,67 @@ IMPORTANT: Return ONLY the JSON object. No additional text, explanations, or for
       // Remove markdown code blocks if present
       cleanText = cleanText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
       
+      // Handle array responses specially (for company/competitor lists)
+      if (cleanText.startsWith('[')) {
+        if (!cleanText.endsWith(']')) {
+          // Find the last complete array element
+          let bracketCount = 0;
+          let braceCount = 0;
+          let lastCompleteArray = '';
+          let inString = false;
+          
+          for (let i = 0; i < cleanText.length; i++) {
+            const char = cleanText[i];
+            
+            if (char === '"' && (i === 0 || cleanText[i-1] !== '\\')) {
+              inString = !inString;
+            }
+            
+            if (!inString) {
+              if (char === '[') bracketCount++;
+              if (char === ']') bracketCount--;
+              if (char === '{') braceCount++;
+              if (char === '}') {
+                braceCount--;
+                // If we completed an object and brackets are balanced at array level
+                if (braceCount === 0 && bracketCount === 1) {
+                  // Check if next non-whitespace is comma or bracket
+                  let nextChar = '';
+                  for (let j = i + 1; j < cleanText.length; j++) {
+                    if (!/\s/.test(cleanText[j])) {
+                      nextChar = cleanText[j];
+                      break;
+                    }
+                  }
+                  if (nextChar === ']') {
+                    lastCompleteArray = cleanText.substring(0, cleanText.indexOf(']', i) + 1);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          
+          if (lastCompleteArray) {
+            cleanText = lastCompleteArray;
+            console.log('🔧 Fixed incomplete array response');
+          } else {
+            // If we can't find complete array, close it
+            if (braceCount > 0) {
+              while (braceCount > 0) {
+                cleanText += '}';
+                braceCount--;
+              }
+            }
+            if (bracketCount > 0) {
+              cleanText += ']';
+            }
+            console.log('🔧 Attempted to repair incomplete array');
+          }
+        }
+      }
       // Try to fix incomplete JSON by finding the last complete object
-      if (cleanText.includes('{') && !cleanText.endsWith('}')) {
+      else if (cleanText.includes('{') && !cleanText.endsWith('}')) {
         // Find the last complete JSON object
         let lastCompleteJson = '';
         let braceCount = 0;

@@ -420,90 +420,247 @@ async function generateComprehensiveAnalysis(consolidatedData: ConsolidatedData,
     
     // Create analysis prompt based on consolidated data
     const analysisPrompt = `
-Based on the following consolidated startup data, provide a comprehensive investment analysis:
+You are an expert venture capital analyst. Based on the following consolidated startup data, provide a comprehensive investment analysis with DETAILED scoring breakdown.
 
 Company Data:
 ${JSON.stringify(consolidatedData, null, 2)}
 
-Please provide a detailed analysis including:
+Provide a detailed investment analysis with the following structure. All scores must be out of 100 and based on actual data provided.
 
-1. Company Assessment (score 0-100)
-2. Founder Team Analysis (score 0-100)  
-3. Market Opportunity Analysis (score 0-100)
-4. Financial Analysis (score 0-100)
-5. Product/Technology Analysis (score 0-100)
-6. Traction Analysis (score 0-100)
-7. Risk Assessment (score 0-100)
-8. Overall Investment Recommendation
-
-Return the analysis in this JSON format:
+Return ONLY valid JSON in this EXACT format:
 
 {
-  "overallScore": 0,
-  "recommendation": "invest/maybe/pass",
-  "confidence": 0,
-  "companyAssessment": {
+  "recommendation": {
+    "decision": "invest/maybe/pass",
     "score": 0,
-    "strengths": ["strength1", "strength2"],
-    "weaknesses": ["weakness1", "weakness2"],
-    "reasoning": "Detailed reasoning"
+    "reasoning": [
+      "Key reason 1",
+      "Key reason 2",
+      "Key reason 3"
+    ],
+    "keyStrengths": [
+      "Strength 1",
+      "Strength 2",
+      "Strength 3"
+    ],
+    "keyWeaknesses": [
+      "Weakness 1",
+      "Weakness 2"
+    ],
+    "investmentThesis": "Detailed 2-3 sentence investment thesis",
+    "nextSteps": [
+      "Next step 1",
+      "Next step 2"
+    ]
   },
   "founderAnalysis": {
     "score": 0,
-    "experience": "Assessment of founder experience",
-    "teamComposition": "Team composition analysis",
-    "leadershipCapability": "Leadership capability assessment"
+    "breakdown": {
+      "founderExperience": {
+        "points": 0,
+        "maxPoints": 8,
+        "assessment": "Detailed assessment of founder experience"
+      },
+      "teamComposition": {
+        "points": 0,
+        "maxPoints": 6,
+        "assessment": "Assessment of team composition"
+      },
+      "advisoryBoard": {
+        "points": 0,
+        "maxPoints": 3,
+        "assessment": "Assessment of advisory board"
+      },
+      "trackRecord": {
+        "points": 0,
+        "maxPoints": 3,
+        "assessment": "Assessment of past successes"
+      }
+    },
+    "summary": "Overall team assessment"
   },
   "marketAnalysis": {
     "score": 0,
-    "marketSize": "Market size assessment",
-    "competition": "Competitive landscape analysis",
-    "opportunity": "Market opportunity assessment"
-  },
-  "financialAnalysis": {
-    "score": 0,
-    "revenueModel": "Revenue model assessment",
-    "growth": "Growth analysis",
-    "unitEconomics": "Unit economics analysis"
+    "breakdown": {
+      "marketSize": {
+        "points": 0,
+        "maxPoints": 8,
+        "assessment": "TAM/SAM/SOM assessment"
+      },
+      "marketTiming": {
+        "points": 0,
+        "maxPoints": 6,
+        "assessment": "Market timing and trends"
+      },
+      "competitionLevel": {
+        "points": 0,
+        "maxPoints": 6,
+        "assessment": "Competitive landscape analysis"
+      }
+    },
+    "summary": "Overall market opportunity assessment"
   },
   "productAnalysis": {
     "score": 0,
-    "innovation": "Product innovation assessment",
-    "marketFit": "Product-market fit analysis",
-    "technology": "Technology assessment"
+    "breakdown": {
+      "innovationLevel": {
+        "points": 0,
+        "maxPoints": 8,
+        "assessment": "Product innovation assessment"
+      },
+      "productMarketFit": {
+        "points": 0,
+        "maxPoints": 6,
+        "assessment": "Product-market fit signals"
+      },
+      "scalability": {
+        "points": 0,
+        "maxPoints": 6,
+        "assessment": "Scalability potential"
+      }
+    },
+    "summary": "Overall product assessment"
   },
   "tractionAnalysis": {
     "score": 0,
-    "customerGrowth": "Customer growth analysis",
-    "revenueGrowth": "Revenue growth analysis",
-    "partnerships": "Partnership analysis"
+    "breakdown": {
+      "customerGrowth": {
+        "points": 0,
+        "maxPoints": 8,
+        "assessment": "Customer acquisition and growth"
+      },
+      "revenueGrowth": {
+        "points": 0,
+        "maxPoints": 7,
+        "assessment": "Revenue growth trajectory"
+      },
+      "keyPartnerships": {
+        "points": 0,
+        "maxPoints": 5,
+        "assessment": "Strategic partnerships"
+      }
+    },
+    "summary": "Overall traction assessment"
+  },
+  "financialAnalysis": {
+    "score": 0,
+    "breakdown": {
+      "unitEconomics": {
+        "points": 0,
+        "maxPoints": 6,
+        "assessment": "LTV:CAC and unit economics"
+      },
+      "burnRate": {
+        "points": 0,
+        "maxPoints": 5,
+        "assessment": "Burn rate and runway"
+      },
+      "revenueModel": {
+        "points": 0,
+        "maxPoints": 4,
+        "assessment": "Revenue model viability"
+      }
+    },
+    "summary": "Overall financial health assessment"
+  },
+  "competitiveAnalysis": {
+    "score": 0,
+    "breakdown": {
+      "uniqueValueProp": {
+        "points": 0,
+        "maxPoints": 2,
+        "assessment": "Unique value proposition"
+      },
+      "defensibility": {
+        "points": 0,
+        "maxPoints": 3,
+        "assessment": "Competitive moats and barriers"
+      }
+    },
+    "summary": "Competitive advantage assessment"
   },
   "riskAnalysis": {
-    "score": 0,
-    "majorRisks": ["risk1", "risk2"],
-    "mitigationStrategies": ["strategy1", "strategy2"],
-    "overallRisk": "low/medium/high"
+    "level": "low/medium/high",
+    "majorRisks": [
+      "Risk 1",
+      "Risk 2"
+    ],
+    "mitigation": "Risk mitigation strategies"
   },
-  "investmentRecommendation": {
-    "decision": "invest/maybe/pass",
-    "suggestedValuation": 0,
-    "investmentAmount": 0,
-    "keyReasons": ["reason1", "reason2"],
-    "nextSteps": ["step1", "step2"]
-  },
-  "executiveSummary": "Comprehensive executive summary for investors"
+  "executiveSummary": "Comprehensive 3-4 sentence executive summary for investors",
+  "confidence": 85
 }
 
-Provide only valid JSON, no additional text.
+IMPORTANT SCORING GUIDELINES:
+- Base ALL scores on actual data provided in the consolidated data
+- If data is missing for a category, score conservatively (30-50 range)
+- Overall score should equal: (founderAnalysis.score * 0.20) + (marketAnalysis.score * 0.20) + (productAnalysis.score * 0.20) + (tractionAnalysis.score * 0.20) + (financialAnalysis.score * 0.15) + (competitiveAnalysis.score * 0.05)
+- Breakdown points must add up to the category score (out of 100)
+- Provide specific, actionable assessments for each factor
+- Return ONLY valid JSON, no markdown or additional text
 `;
 
     const analysisResult = await geminiService.analyzeStartupData(analysisPrompt, 'recommendation');
     
     console.log('✅ Comprehensive analysis completed');
+    console.log('📊 Analysis structure:', JSON.stringify(analysisResult, null, 2).substring(0, 500));
+    
+    // Validate the analysis result has required fields
+    if (!analysisResult.founderAnalysis || !analysisResult.marketAnalysis || 
+        !analysisResult.productAnalysis || !analysisResult.tractionAnalysis) {
+      console.warn('⚠️ Gemini returned incomplete analysis structure, using fallback');
+      return generateFallbackAnalysis(consolidatedData);
+    }
+    
+    // Recalculate category scores from breakdown to ensure accuracy
+    const recalculateCategoryScore = (breakdown: any) => {
+      if (!breakdown) return 0;
+      let total = 0;
+      for (const factor of Object.values(breakdown)) {
+        if (factor && typeof factor === 'object' && 'points' in factor) {
+          total += (factor as any).points || 0;
+        }
+      }
+      return total;
+    };
+    
+    // Override category scores with calculated values
+    analysisResult.founderAnalysis.score = recalculateCategoryScore(analysisResult.founderAnalysis.breakdown);
+    analysisResult.marketAnalysis.score = recalculateCategoryScore(analysisResult.marketAnalysis.breakdown);
+    analysisResult.productAnalysis.score = recalculateCategoryScore(analysisResult.productAnalysis.breakdown);
+    analysisResult.tractionAnalysis.score = recalculateCategoryScore(analysisResult.tractionAnalysis.breakdown);
+    analysisResult.financialAnalysis.score = recalculateCategoryScore(analysisResult.financialAnalysis.breakdown);
+    analysisResult.competitiveAnalysis.score = recalculateCategoryScore(analysisResult.competitiveAnalysis.breakdown);
+    
+    // Calculate overall score
+    const overallScore = Math.round(
+      (analysisResult.founderAnalysis.score * 0.20) +
+      (analysisResult.marketAnalysis.score * 0.20) +
+      (analysisResult.productAnalysis.score * 0.20) +
+      (analysisResult.tractionAnalysis.score * 0.20) +
+      (analysisResult.financialAnalysis.score * 0.15) +
+      (analysisResult.competitiveAnalysis.score * 0.05)
+    ) * 5; // Multiply by 5 to get score out of 100
+    
+    analysisResult.overallScore = overallScore;
+    if (analysisResult.recommendation) {
+      analysisResult.recommendation.overallScore = overallScore;
+    }
+    
+    console.log('✅ Scores validated and calculated:');
+    console.log(`   Overall: ${overallScore}/100`);
+    console.log(`   Team: ${analysisResult.founderAnalysis.score}/20`);
+    console.log(`   Market: ${analysisResult.marketAnalysis.score}/20`);
+    console.log(`   Product: ${analysisResult.productAnalysis.score}/20`);
+    console.log(`   Traction: ${analysisResult.tractionAnalysis.score}/20`);
+    console.log(`   Financial: ${analysisResult.financialAnalysis.score}/15`);
+    console.log(`   Competitive: ${analysisResult.competitiveAnalysis.score}/5`);
+    
     return analysisResult;
 
   } catch (error) {
     console.error('❌ Error generating analysis:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     
     // Return fallback analysis
     return generateFallbackAnalysis(consolidatedData);
@@ -555,18 +712,106 @@ function generateFallbackConsolidatedData(documents: ProcessedDocument[]): Conso
   };
 }
 
-function generateFallbackAnalysis(consolidatedData: ConsolidatedData): any {
+function generateFallbackAnalysis(consolidatedData?: ConsolidatedData): any {
+  const companyName = consolidatedData?.companyOverview?.name || 'Unknown Company';
+  const textExtracted = consolidatedData?.financials?.customers || 0;
+  
   return {
-    overallScore: 60,
-    recommendation: 'maybe',
-    confidence: 50,
-    companyAssessment: {
-      score: 60,
-      strengths: ['Identified opportunity'],
-      weaknesses: ['Limited data available'],
-      reasoning: 'Analysis based on limited information'
+    founderAnalysis: {
+      score: 6,
+      breakdown: {
+        founderExperience: { points: 2, maxPoints: 8, assessment: "Insufficient data to assess founder experience" },
+        teamComposition: { points: 2, maxPoints: 6, assessment: "Team composition data not available" },
+        advisoryBoard: { points: 1, maxPoints: 3, assessment: "Advisory board information not provided" },
+        trackRecord: { points: 1, maxPoints: 3, assessment: "Previous track record not documented" }
+      },
+      summary: "Team assessment incomplete due to limited documentation"
     },
-    executiveSummary: `Analysis of ${consolidatedData.companyOverview.name} based on available documentation. Recommendation requires additional information for comprehensive assessment.`
+    marketAnalysis: {
+      score: 6,
+      breakdown: {
+        marketSize: { points: 2, maxPoints: 8, assessment: "Market size data not provided" },
+        marketTiming: { points: 2, maxPoints: 6, assessment: "Market timing analysis requires more data" },
+        competitionLevel: { points: 2, maxPoints: 6, assessment: "Competitive landscape not documented" }
+      },
+      summary: "Market opportunity requires additional documentation"
+    },
+    productAnalysis: {
+      score: 6,
+      breakdown: {
+        innovationLevel: { points: 2, maxPoints: 8, assessment: "Product innovation not clearly documented" },
+        productMarketFit: { points: 2, maxPoints: 6, assessment: "Product-market fit signals not available" },
+        scalability: { points: 2, maxPoints: 6, assessment: "Scalability potential unclear from documents" }
+      },
+      summary: "Product details require comprehensive documentation"
+    },
+    tractionAnalysis: {
+      score: 5,
+      breakdown: {
+        customerGrowth: { points: 2, maxPoints: 8, assessment: "Customer growth metrics not provided" },
+        revenueGrowth: { points: 2, maxPoints: 7, assessment: "Revenue growth data not available" },
+        keyPartnerships: { points: 1, maxPoints: 5, assessment: "Partnership information not documented" }
+      },
+      summary: "Traction metrics require detailed documentation"
+    },
+    financialAnalysis: {
+      score: 5,
+      breakdown: {
+        unitEconomics: { points: 2, maxPoints: 6, assessment: "Unit economics data not available" },
+        burnRate: { points: 1, maxPoints: 5, assessment: "Burn rate and runway not documented" },
+        revenueModel: { points: 2, maxPoints: 4, assessment: "Revenue model unclear from documents" }
+      },
+      summary: "Financial health assessment incomplete"
+    },
+    competitiveAnalysis: {
+      score: 2,
+      breakdown: {
+        uniqueValueProp: { points: 1, maxPoints: 2, assessment: "Unique value proposition not clearly defined" },
+        defensibility: { points: 1, maxPoints: 3, assessment: "Competitive moat not documented" }
+      },
+      summary: "Competitive positioning requires more detail"
+    },
+    recommendation: {
+      decision: 'pass',
+      score: 30,
+      overallScore: 30,
+      reasoning: [
+        'Insufficient documentation provided for comprehensive analysis',
+        'Key metrics and data points missing from uploaded documents',
+        'Unable to assess team, market, product, traction, or financials thoroughly',
+        'Recommend uploading complete pitch deck, financial model, and team information'
+      ],
+      keyStrengths: [],
+      keyWeaknesses: [
+        'Limited text extracted from documents',
+        'Missing critical business information',
+        'Incomplete financial data',
+        'Lack of traction metrics'
+      ],
+      concerns: [
+        'Documents may be password-protected or corrupted',
+        'Text extraction failed - consider re-uploading in different format',
+        'Need pitch deck, financial model, and founder information'
+      ],
+      investmentThesis: `Analysis of ${companyName} cannot be completed due to insufficient documentation. The uploaded files contained minimal extractable text (${textExtracted} characters). For proper investment analysis, please provide: 1) Complete pitch deck with company overview, market analysis, and product details, 2) Financial model with revenue projections and metrics, 3) Founder/team information and backgrounds.`,
+      nextSteps: [
+        'Upload complete pitch deck (PDF or PPTX)',
+        'Provide detailed financial model',
+        'Include founder backgrounds and team information',
+        'Ensure documents are not password-protected',
+        'Consider converting documents to PDF format for better text extraction'
+      ]
+    },
+    riskAnalysis: {
+      level: 'High',
+      factors: [
+        'Insufficient data for risk assessment',
+        'Unable to evaluate market risks',
+        'Financial health unclear'
+      ]
+    },
+    executiveSummary: `Analysis of ${companyName} cannot proceed due to insufficient documentation. The system extracted minimal text from the uploaded files, preventing comprehensive investment analysis. To receive a detailed investment recommendation, please upload complete documentation including pitch deck, financial projections, team information, and market analysis. Current assessment: PASS - Incomplete data.`,
+    confidence: 20
   };
 }
 

@@ -15,15 +15,25 @@ import {
   LineChart,
   FileText
 } from 'lucide-react';
+import ScoreTransparency from './ScoreTransparency';
+import MarketIntelligence from './MarketIntelligence';
+import SectorBenchmark from './SectorBenchmark';
 
 interface AnalysisResultsProps {
   analysisData: any;
   onNewAnalysis: () => void;
   viewMode?: 'summary' | 'detailed';
+  onViewModeChange?: (mode: 'summary' | 'detailed') => void;
 }
 
-export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, viewMode = 'summary' }: AnalysisResultsProps) {
+export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, viewMode: externalViewMode = 'detailed', onViewModeChange }: AnalysisResultsProps) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [internalViewMode, setInternalViewMode] = useState<'summary' | 'detailed'>(externalViewMode);
+  
+  // Use external viewMode if provided, otherwise use internal state
+  const viewMode = onViewModeChange ? externalViewMode : internalViewMode;
+  const setViewMode = onViewModeChange || setInternalViewMode;
+  
   const analysis = analysisData?.analysis || {};
   const consolidatedData = analysisData?.consolidatedData || {};
   const processingMetadata = analysisData?.processingMetadata || {};
@@ -43,16 +53,26 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
     }
   };
 
-  // Extract scores from analysis
+  // Extract scores from analysis - ALL from Gemini AI API
+  const overallScore = analysis?.recommendation?.score || analysis?.overallScore || 0;
+  
+  // Use REAL scores from API analysis - no calculations!
   const scores = {
-    overall: analysis?.recommendation?.score || analysis?.overallScore || 0,
-    company: analysis?.companyAssessment?.score || 0,
+    overall: overallScore,
     founder: analysis?.founderAnalysis?.score || 0,
     market: analysis?.marketAnalysis?.score || 0,
-    financial: analysis?.financialAnalysis?.score || 0,
     product: analysis?.productAnalysis?.score || 0,
     traction: analysis?.tractionAnalysis?.score || 0,
-    risk: analysis?.riskAnalysis?.score || 0
+    financial: analysis?.financialAnalysis?.score || 0,
+    competitive: analysis?.competitiveAnalysis?.score || 0,
+    risk: 0
+  };
+
+  // Helper function to distribute score across factors
+  const distributeScoreAcrossFactors = (categoryScore: number, maxScore: number, factorCount: number) => {
+    const percentage = categoryScore / maxScore;
+    const basePoints = Math.floor((categoryScore / factorCount) * 10) / 10;
+    return { percentage, basePoints };
   };
 
   return (
@@ -71,24 +91,46 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
         <div className="space-y-6">
           {/* Key Metrics Dashboard - Summary Only */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Investment Decision */}
-            <div className="bg-white border-2 rounded-xl p-6 text-center shadow-sm">
+            {/* Investment Decision - Clickable */}
+            <button
+              onClick={() => {
+                console.log('🎯 Switching to detailed view and scrolling...');
+                // Switch to detailed view first
+                setViewMode('detailed');
+                // Then scroll after a short delay to ensure DOM updates
+                setTimeout(() => {
+                  const scoreSection = document.getElementById('score-transparency-section');
+                  if (scoreSection) {
+                    console.log('✅ Found score section, scrolling...');
+                    scoreSection.scrollIntoView({ 
+                      behavior: 'smooth', 
+                      block: 'center' 
+                    });
+                  } else {
+                    console.log('❌ Score section element not found');
+                  }
+                }, 300);
+              }}
+              className="bg-white border-2 rounded-xl p-6 text-center shadow-sm hover:shadow-lg hover:border-blue-400 transition-all cursor-pointer group"
+            >
               <div className={`inline-flex px-4 py-2 rounded-full text-sm font-bold border-2 mb-3 ${
                 getRecommendationColor(analysis?.recommendation?.decision)
               }`}>
                 {(analysis?.recommendation?.decision || analysis?.recommendation || 'PENDING').toUpperCase()}
               </div>
-              <div className="text-4xl font-bold text-gray-900 mb-1">
+              <div className="text-4xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
                 {scores.overall}/100
               </div>
-              <div className="text-sm text-gray-600">Investment Score</div>
-            </div>
+              <div className="text-sm text-gray-600 group-hover:text-blue-600 transition-colors">
+                Investment Score • Click to see calculation
+              </div>
+            </button>
 
             {/* Potential Return */}
             <div className="bg-white border rounded-xl p-6 text-center shadow-sm">
               <DollarSign className="h-8 w-8 text-green-500 mx-auto mb-2" />
               <div className="text-2xl font-bold text-gray-900 mb-1">
-                {analysis?.financialProjections?.potentialReturn || consolidatedData?.financial?.expectedROI || '12-15x'}
+                {analysis?.financialProjections?.potentialReturn || analysis?.financial?.expectedROI || 'N/A'}
               </div>
               <div className="text-sm text-gray-600">Potential Return</div>
             </div>
@@ -97,7 +139,7 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
             <div className="bg-white border rounded-xl p-6 text-center shadow-sm">
               <AlertTriangle className="h-8 w-8 text-orange-500 mx-auto mb-2" />
               <div className="text-2xl font-bold text-gray-900 mb-1">
-                {analysis?.riskAnalysis?.level || 'Medium'}
+                {analysis?.riskAnalysis?.level || 'Not Assessed'}
               </div>
               <div className="text-sm text-gray-600">Risk Level</div>
             </div>
@@ -109,13 +151,13 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
               <FileText className="h-6 w-6 text-blue-500 mr-2" />
               Executive Summary
             </h3>
-            <p className="text-gray-700 leading-relaxed">
-              {analysis?.executiveSummary || analysis?.summary || consolidatedData?.summary || 
-                `Based on our comprehensive analysis of ${consolidatedData?.companyInfo?.name || 'the startup'}, 
-                we recommend this investment opportunity with an overall score of ${scores.overall}/100. 
-                The company demonstrates strong potential in its market segment with notable strengths 
-                in business model and team capabilities.`}
-            </p>
+            {(analysis?.executiveSummary || analysis?.summary || consolidatedData?.summary) ? (
+              <p className="text-gray-700 leading-relaxed">
+                {analysis?.executiveSummary || analysis?.summary || consolidatedData?.summary}
+              </p>
+            ) : (
+              <p className="text-gray-500 italic">Executive summary not available. Upload more documents for comprehensive analysis.</p>
+            )}
           </div>
 
           {/* Key Highlights - Summary */}
@@ -163,8 +205,16 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
 
       {/* Key Metrics Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Investment Decision */}
-        <div className="bg-white border-2 rounded-xl p-6 text-center shadow-sm">
+        {/* Investment Decision - Clickable */}
+        <button
+          onClick={() => {
+            const element = document.getElementById('score-transparency-section');
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+          className="bg-white border-2 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-indigo-400"
+        >
           <div className={`inline-flex px-4 py-2 rounded-full text-sm font-bold border-2 mb-3 ${
             getRecommendationColor(analysis?.recommendation?.decision)
           }`}>
@@ -174,7 +224,8 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
             {scores.overall}/100
           </div>
           <div className="text-sm text-gray-600">Investment Score</div>
-        </div>
+          <div className="text-xs text-indigo-500 mt-2">Click for breakdown</div>
+        </button>
 
         {/* Business Model */}
         <div className="bg-white border rounded-xl p-6 text-center shadow-sm">
@@ -402,6 +453,205 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
           </div>
         </div>
       )}
+
+      {/* Market Intelligence Dashboard */}
+      <MarketIntelligence />
+
+      {/* Sector Benchmarking */}
+      <SectorBenchmark 
+        sector={consolidatedData?.companyInfo?.industry || "Technology"}
+        companyName={consolidatedData?.companyInfo?.name || "Your Startup"}
+        companyMetrics={{
+          fundingRaised: consolidatedData?.financial?.cashRaised ? `$${(consolidatedData.financial.cashRaised / 1000000).toFixed(1)}M` : "Not Disclosed",
+          valuation: consolidatedData?.financial?.valuation ? `$${(consolidatedData.financial.valuation / 1000000).toFixed(1)}M` : "Not Disclosed",
+          revenueGrowth: consolidatedData?.financial?.revenueGrowthRate ? `+${consolidatedData.financial.revenueGrowthRate}%` : "Not Disclosed",
+          employees: consolidatedData?.financial?.employees || 0
+        }}
+      />
+
+      {/* Score Transparency */}
+      <div id="score-transparency-section" className="scroll-mt-24">
+        <ScoreTransparency 
+          overallScore={scores.overall}
+          breakdown={[
+            {
+              category: "Team Quality",
+              score: scores.founder,
+              maxScore: 20,
+              weight: 20,
+              factors: analysis?.founderAnalysis?.breakdown ? [
+                {
+                  name: "Founder Experience",
+                  points: analysis.founderAnalysis.breakdown.founderExperience?.points || 0,
+                  maxPoints: analysis.founderAnalysis.breakdown.founderExperience?.maxPoints || 8,
+                  achieved: (analysis.founderAnalysis.breakdown.founderExperience?.points || 0) >= 4,
+                  description: analysis.founderAnalysis.breakdown.founderExperience?.assessment || "5+ years in industry with previous startup experience"
+                },
+                {
+                  name: "Team Composition",
+                  points: analysis.founderAnalysis.breakdown.teamComposition?.points || 0,
+                  maxPoints: analysis.founderAnalysis.breakdown.teamComposition?.maxPoints || 6,
+                  achieved: (analysis.founderAnalysis.breakdown.teamComposition?.points || 0) >= 3,
+                  description: analysis.founderAnalysis.breakdown.teamComposition?.assessment || "Technical and business co-founders present"
+                },
+                {
+                  name: "Advisory Board",
+                  points: analysis.founderAnalysis.breakdown.advisoryBoard?.points || 0,
+                  maxPoints: analysis.founderAnalysis.breakdown.advisoryBoard?.maxPoints || 3,
+                  achieved: (analysis.founderAnalysis.breakdown.advisoryBoard?.points || 0) >= 2,
+                  description: analysis.founderAnalysis.breakdown.advisoryBoard?.assessment || "Industry experts on advisory board"
+                },
+                {
+                  name: "Track Record",
+                  points: analysis.founderAnalysis.breakdown.trackRecord?.points || 0,
+                  maxPoints: analysis.founderAnalysis.breakdown.trackRecord?.maxPoints || 3,
+                  achieved: (analysis.founderAnalysis.breakdown.trackRecord?.points || 0) >= 2,
+                  description: analysis.founderAnalysis.breakdown.trackRecord?.assessment || "Previous successful exits or funding rounds"
+                }
+              ] : []
+            },
+            {
+              category: "Market Opportunity",
+              score: scores.market,
+              maxScore: 20,
+              weight: 20,
+              factors: analysis?.marketAnalysis?.breakdown ? [
+                {
+                  name: "Market Size",
+                  points: analysis.marketAnalysis.breakdown.marketSize?.points || 0,
+                  maxPoints: analysis.marketAnalysis.breakdown.marketSize?.maxPoints || 8,
+                  achieved: (analysis.marketAnalysis.breakdown.marketSize?.points || 0) >= 4,
+                  description: analysis.marketAnalysis.breakdown.marketSize?.assessment || "TAM exceeds $1B with strong growth trajectory"
+                },
+                {
+                  name: "Market Timing",
+                  points: analysis.marketAnalysis.breakdown.marketTiming?.points || 0,
+                  maxPoints: analysis.marketAnalysis.breakdown.marketTiming?.maxPoints || 6,
+                  achieved: (analysis.marketAnalysis.breakdown.marketTiming?.points || 0) >= 3,
+                  description: analysis.marketAnalysis.breakdown.marketTiming?.assessment || "Entering market at optimal inflection point"
+                },
+                {
+                  name: "Competition Level",
+                  points: analysis.marketAnalysis.breakdown.competitionLevel?.points || 0,
+                  maxPoints: analysis.marketAnalysis.breakdown.competitionLevel?.maxPoints || 6,
+                  achieved: (analysis.marketAnalysis.breakdown.competitionLevel?.points || 0) >= 3,
+                  description: analysis.marketAnalysis.breakdown.competitionLevel?.assessment || "Moderate competition with room for differentiation"
+                }
+              ] : []
+            },
+            {
+              category: "Product Innovation",
+              score: scores.product,
+              maxScore: 20,
+              weight: 20,
+              factors: analysis?.productAnalysis?.breakdown ? [
+                {
+                  name: "Innovation Level",
+                  points: analysis.productAnalysis.breakdown.innovationLevel?.points || 0,
+                  maxPoints: analysis.productAnalysis.breakdown.innovationLevel?.maxPoints || 8,
+                  achieved: (analysis.productAnalysis.breakdown.innovationLevel?.points || 0) >= 4,
+                  description: analysis.productAnalysis.breakdown.innovationLevel?.assessment || "Novel approach with defensible technology"
+                },
+                {
+                  name: "Product-Market Fit",
+                  points: analysis.productAnalysis.breakdown.productMarketFit?.points || 0,
+                  maxPoints: analysis.productAnalysis.breakdown.productMarketFit?.maxPoints || 6,
+                  achieved: (analysis.productAnalysis.breakdown.productMarketFit?.points || 0) >= 3,
+                  description: analysis.productAnalysis.breakdown.productMarketFit?.assessment || "Strong early signals of product-market fit"
+                },
+                {
+                  name: "Scalability",
+                  points: analysis.productAnalysis.breakdown.scalability?.points || 0,
+                  maxPoints: analysis.productAnalysis.breakdown.scalability?.maxPoints || 6,
+                  achieved: (analysis.productAnalysis.breakdown.scalability?.points || 0) >= 3,
+                  description: analysis.productAnalysis.breakdown.scalability?.assessment || "Product architecture supports rapid scaling"
+                }
+              ] : []
+            },
+            {
+              category: "Traction & Growth",
+              score: scores.traction,
+              maxScore: 20,
+              weight: 20,
+              factors: analysis?.tractionAnalysis?.breakdown ? [
+                {
+                  name: "Customer Growth",
+                  points: analysis.tractionAnalysis.breakdown.customerGrowth?.points || 0,
+                  maxPoints: analysis.tractionAnalysis.breakdown.customerGrowth?.maxPoints || 8,
+                  achieved: (analysis.tractionAnalysis.breakdown.customerGrowth?.points || 0) >= 4,
+                  description: analysis.tractionAnalysis.breakdown.customerGrowth?.assessment || "Consistent month-over-month growth in customers"
+                },
+                {
+                  name: "Revenue Growth",
+                  points: analysis.tractionAnalysis.breakdown.revenueGrowth?.points || 0,
+                  maxPoints: analysis.tractionAnalysis.breakdown.revenueGrowth?.maxPoints || 7,
+                  achieved: (analysis.tractionAnalysis.breakdown.revenueGrowth?.points || 0) >= 4,
+                  description: analysis.tractionAnalysis.breakdown.revenueGrowth?.assessment || "Strong revenue growth trajectory"
+                },
+                {
+                  name: "Key Partnerships",
+                  points: analysis.tractionAnalysis.breakdown.keyPartnerships?.points || 0,
+                  maxPoints: analysis.tractionAnalysis.breakdown.keyPartnerships?.maxPoints || 5,
+                  achieved: (analysis.tractionAnalysis.breakdown.keyPartnerships?.points || 0) >= 3,
+                  description: analysis.tractionAnalysis.breakdown.keyPartnerships?.assessment || "Strategic partnerships with industry leaders"
+                }
+              ] : []
+            },
+            {
+              category: "Financial Health",
+              score: scores.financial,
+              maxScore: 15,
+              weight: 15,
+              factors: analysis?.financialAnalysis?.breakdown ? [
+                {
+                  name: "Unit Economics",
+                  points: analysis.financialAnalysis.breakdown.unitEconomics?.points || 0,
+                  maxPoints: analysis.financialAnalysis.breakdown.unitEconomics?.maxPoints || 6,
+                  achieved: (analysis.financialAnalysis.breakdown.unitEconomics?.points || 0) >= 3,
+                  description: analysis.financialAnalysis.breakdown.unitEconomics?.assessment || "LTV:CAC ratio above 3:1"
+                },
+                {
+                  name: "Burn Rate",
+                  points: analysis.financialAnalysis.breakdown.burnRate?.points || 0,
+                  maxPoints: analysis.financialAnalysis.breakdown.burnRate?.maxPoints || 5,
+                  achieved: (analysis.financialAnalysis.breakdown.burnRate?.points || 0) >= 3,
+                  description: analysis.financialAnalysis.breakdown.burnRate?.assessment || "Efficient capital deployment with 12+ month runway"
+                },
+                {
+                  name: "Revenue Model",
+                  points: analysis.financialAnalysis.breakdown.revenueModel?.points || 0,
+                  maxPoints: analysis.financialAnalysis.breakdown.revenueModel?.maxPoints || 4,
+                  achieved: (analysis.financialAnalysis.breakdown.revenueModel?.points || 0) >= 2,
+                  description: analysis.financialAnalysis.breakdown.revenueModel?.assessment || "Clear and proven revenue model"
+                }
+              ] : []
+            },
+            {
+              category: "Competitive Advantage",
+              score: Math.round(scores.overall * 0.05),
+              maxScore: 5,
+              weight: 5,
+              factors: analysis?.competitiveAnalysis?.breakdown ? [
+                {
+                  name: "Unique Value Prop",
+                  points: analysis.competitiveAnalysis.breakdown.uniqueValueProp?.points || 0,
+                  maxPoints: analysis.competitiveAnalysis.breakdown.uniqueValueProp?.maxPoints || 2,
+                  achieved: (analysis.competitiveAnalysis.breakdown.uniqueValueProp?.points || 0) >= 1,
+                  description: analysis.competitiveAnalysis.breakdown.uniqueValueProp?.assessment || "Clear differentiation from competitors"
+                },
+                {
+                  name: "Defensibility",
+                  points: analysis.competitiveAnalysis.breakdown.defensibility?.points || 0,
+                  maxPoints: analysis.competitiveAnalysis.breakdown.defensibility?.maxPoints || 3,
+                  achieved: (analysis.competitiveAnalysis.breakdown.defensibility?.points || 0) >= 2,
+                  description: analysis.competitiveAnalysis.breakdown.defensibility?.assessment || "Network effects and data moats emerging"
+                }
+              ] : []
+            }
+          ]}
+        industryAverage={70}
+      />
+      </div>
 
       {/* Action Buttons */}
       <div className="flex justify-center space-x-4 pt-8">

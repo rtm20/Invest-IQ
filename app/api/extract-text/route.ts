@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { visionService } from '@/lib/google-cloud';
+import { fileCompressor } from '@/lib/file-compressor';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,12 +48,17 @@ export async function POST(request: NextRequest) {
 
     console.log(`📁 Processing file: ${file.name} (${file.type}, ${file.size} bytes)`);
 
+    // Check if compression is needed
+    if (fileCompressor.needsCompression(file.size)) {
+      console.log(`⚠️ File size (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds recommended limit. Will compress before processing.`);
+    }
+
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Extract text using Google Vision API
-    const extractedText = await visionService.extractTextFromDocument(buffer);
+    // Extract text using Google Vision API (compression handled internally)
+    const extractedText = await visionService.extractTextFromDocument(buffer, file.name);
 
     if (!extractedText || extractedText.trim().length === 0) {
       return NextResponse.json(

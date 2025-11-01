@@ -299,6 +299,9 @@ export function UploadSection({ onAnalysisComplete }: UploadSectionProps) {
                 <p className="text-sm text-gray-500">
                   Supports PDF, PPTX, DOCX, TXT • Max 50MB per file
                 </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Files over 4MB will be automatically compressed without losing information
+                </p>
               </div>
             )}
           </div>
