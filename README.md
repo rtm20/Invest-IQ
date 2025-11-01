@@ -7,6 +7,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC)](https://tailwindcss.com/)
 
+<img width="1423" height="905" alt="image" src="https://github.com/user-attachments/assets/d1e14060-ea6a-4844-8335-f28a9fadc5cb" />
+
+
 ## 🎯 **Project Overview**
 
 AI Startup Analyst is a sophisticated investment analysis platform that leverages **real Google Cloud AI services** to automatically analyze startup pitch decks and generate comprehensive investment insights. Built specifically for the Google AI Hackathon, this application showcases the power of Google's AI ecosystem in transforming how investors evaluate early-stage companies.
@@ -290,3 +293,4 @@ MIT License - see LICENSE file for details.
 **Built with ❤️ for the Google AI Hackathon**
 
 *Showcasing the power of Gemini, Cloud Vision, and Vertex AI for startup investment analysis.*
+
