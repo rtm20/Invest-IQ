@@ -408,9 +408,7 @@ Extract only factual information from the documents. Use 0 or empty arrays for m
 
   } catch (error) {
     console.error('❌ Error consolidating data:', error);
-    
-    // Return fallback consolidated data
-    return generateFallbackConsolidatedData(documents);
+    throw new Error('Failed to consolidate document data. Please try again.');
   }
 }
 
@@ -420,14 +418,14 @@ async function generateComprehensiveAnalysis(consolidatedData: ConsolidatedData,
     
     // Create analysis prompt based on consolidated data
     const analysisPrompt = `
-You are an expert venture capital analyst. Based on the following consolidated startup data, provide a comprehensive investment analysis with DETAILED scoring breakdown.
+You are an expert VC analyst. Analyze this startup data and return a comprehensive investment analysis.
 
 Company Data:
 ${JSON.stringify(consolidatedData, null, 2)}
 
-Provide a detailed investment analysis with the following structure. All scores must be out of 100 and based on actual data provided.
+IMPORTANT: Return ONLY valid, complete JSON. Do not truncate. Ensure all arrays and objects are properly closed.
 
-Return ONLY valid JSON in this EXACT format:
+Return this EXACT JSON structure:
 
 {
   "recommendation": {
@@ -591,13 +589,14 @@ Return ONLY valid JSON in this EXACT format:
   "confidence": 85
 }
 
-IMPORTANT SCORING GUIDELINES:
-- Base ALL scores on actual data provided in the consolidated data
-- If data is missing for a category, score conservatively (30-50 range)
-- Overall score should equal: (founderAnalysis.score * 0.20) + (marketAnalysis.score * 0.20) + (productAnalysis.score * 0.20) + (tractionAnalysis.score * 0.20) + (financialAnalysis.score * 0.15) + (competitiveAnalysis.score * 0.05)
-- Breakdown points must add up to the category score (out of 100)
-- Provide specific, actionable assessments for each factor
-- Return ONLY valid JSON, no markdown or additional text
+CRITICAL RULES:
+1. Return ONLY valid JSON - no markdown, no truncation
+2. Close ALL arrays and objects properly
+3. Base scores on provided data (30-50 if data missing)
+4. Category scores = sum of breakdown points
+5. Overall score = weighted average * 5
+6. Keep assessments concise (max 100 chars each)
+7. Ensure JSON is complete before responding
 `;
 
     const analysisResult = await geminiService.analyzeStartupData(analysisPrompt, 'recommendation');
@@ -608,8 +607,8 @@ IMPORTANT SCORING GUIDELINES:
     // Validate the analysis result has required fields
     if (!analysisResult.founderAnalysis || !analysisResult.marketAnalysis || 
         !analysisResult.productAnalysis || !analysisResult.tractionAnalysis) {
-      console.warn('⚠️ Gemini returned incomplete analysis structure, using fallback');
-      return generateFallbackAnalysis(consolidatedData);
+      console.error('❌ Gemini returned incomplete analysis structure');
+      throw new Error('Gemini API returned incomplete analysis. Please retry the analysis.');
     }
     
     // Recalculate category scores from breakdown to ensure accuracy
@@ -661,159 +660,12 @@ IMPORTANT SCORING GUIDELINES:
   } catch (error) {
     console.error('❌ Error generating analysis:', error);
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
-    
-    // Return fallback analysis
-    return generateFallbackAnalysis(consolidatedData);
+    throw error;
   }
 }
 
-function generateFallbackConsolidatedData(documents: ProcessedDocument[]): ConsolidatedData {
-  // Generate basic consolidated data from documents
-  const companyName = extractCompanyNameFromDocuments(documents);
-  
-  return {
-    companyOverview: {
-      name: companyName,
-      industry: 'Technology',
-      stage: 'Early Stage',
-      location: 'Unknown',
-      description: `${companyName} is a technology startup.`
-    },
-    founders: [],
-    businessModel: {
-      type: 'Unknown',
-      revenueStreams: [],
-      targetMarket: '',
-      valueProposition: ''
-    },
-    financials: {
-      employees: 0,
-      customers: 0
-    },
-    market: {
-      competitors: [],
-      marketTrends: []
-    },
-    product: {
-      description: '',
-      stage: 'Unknown',
-      features: [],
-      technology: [],
-      differentiators: []
-    },
-    traction: {
-      partnerships: [],
-      milestones: []
-    },
-    funding: {
-      useOfFunds: []
-    },
-    risks: []
-  };
-}
-
-function generateFallbackAnalysis(consolidatedData?: ConsolidatedData): any {
-  const companyName = consolidatedData?.companyOverview?.name || 'Unknown Company';
-  const textExtracted = consolidatedData?.financials?.customers || 0;
-  
-  return {
-    founderAnalysis: {
-      score: 6,
-      breakdown: {
-        founderExperience: { points: 2, maxPoints: 8, assessment: "Insufficient data to assess founder experience" },
-        teamComposition: { points: 2, maxPoints: 6, assessment: "Team composition data not available" },
-        advisoryBoard: { points: 1, maxPoints: 3, assessment: "Advisory board information not provided" },
-        trackRecord: { points: 1, maxPoints: 3, assessment: "Previous track record not documented" }
-      },
-      summary: "Team assessment incomplete due to limited documentation"
-    },
-    marketAnalysis: {
-      score: 6,
-      breakdown: {
-        marketSize: { points: 2, maxPoints: 8, assessment: "Market size data not provided" },
-        marketTiming: { points: 2, maxPoints: 6, assessment: "Market timing analysis requires more data" },
-        competitionLevel: { points: 2, maxPoints: 6, assessment: "Competitive landscape not documented" }
-      },
-      summary: "Market opportunity requires additional documentation"
-    },
-    productAnalysis: {
-      score: 6,
-      breakdown: {
-        innovationLevel: { points: 2, maxPoints: 8, assessment: "Product innovation not clearly documented" },
-        productMarketFit: { points: 2, maxPoints: 6, assessment: "Product-market fit signals not available" },
-        scalability: { points: 2, maxPoints: 6, assessment: "Scalability potential unclear from documents" }
-      },
-      summary: "Product details require comprehensive documentation"
-    },
-    tractionAnalysis: {
-      score: 5,
-      breakdown: {
-        customerGrowth: { points: 2, maxPoints: 8, assessment: "Customer growth metrics not provided" },
-        revenueGrowth: { points: 2, maxPoints: 7, assessment: "Revenue growth data not available" },
-        keyPartnerships: { points: 1, maxPoints: 5, assessment: "Partnership information not documented" }
-      },
-      summary: "Traction metrics require detailed documentation"
-    },
-    financialAnalysis: {
-      score: 5,
-      breakdown: {
-        unitEconomics: { points: 2, maxPoints: 6, assessment: "Unit economics data not available" },
-        burnRate: { points: 1, maxPoints: 5, assessment: "Burn rate and runway not documented" },
-        revenueModel: { points: 2, maxPoints: 4, assessment: "Revenue model unclear from documents" }
-      },
-      summary: "Financial health assessment incomplete"
-    },
-    competitiveAnalysis: {
-      score: 2,
-      breakdown: {
-        uniqueValueProp: { points: 1, maxPoints: 2, assessment: "Unique value proposition not clearly defined" },
-        defensibility: { points: 1, maxPoints: 3, assessment: "Competitive moat not documented" }
-      },
-      summary: "Competitive positioning requires more detail"
-    },
-    recommendation: {
-      decision: 'pass',
-      score: 30,
-      overallScore: 30,
-      reasoning: [
-        'Insufficient documentation provided for comprehensive analysis',
-        'Key metrics and data points missing from uploaded documents',
-        'Unable to assess team, market, product, traction, or financials thoroughly',
-        'Recommend uploading complete pitch deck, financial model, and team information'
-      ],
-      keyStrengths: [],
-      keyWeaknesses: [
-        'Limited text extracted from documents',
-        'Missing critical business information',
-        'Incomplete financial data',
-        'Lack of traction metrics'
-      ],
-      concerns: [
-        'Documents may be password-protected or corrupted',
-        'Text extraction failed - consider re-uploading in different format',
-        'Need pitch deck, financial model, and founder information'
-      ],
-      investmentThesis: `Analysis of ${companyName} cannot be completed due to insufficient documentation. The uploaded files contained minimal extractable text (${textExtracted} characters). For proper investment analysis, please provide: 1) Complete pitch deck with company overview, market analysis, and product details, 2) Financial model with revenue projections and metrics, 3) Founder/team information and backgrounds.`,
-      nextSteps: [
-        'Upload complete pitch deck (PDF or PPTX)',
-        'Provide detailed financial model',
-        'Include founder backgrounds and team information',
-        'Ensure documents are not password-protected',
-        'Consider converting documents to PDF format for better text extraction'
-      ]
-    },
-    riskAnalysis: {
-      level: 'High',
-      factors: [
-        'Insufficient data for risk assessment',
-        'Unable to evaluate market risks',
-        'Financial health unclear'
-      ]
-    },
-    executiveSummary: `Analysis of ${companyName} cannot proceed due to insufficient documentation. The system extracted minimal text from the uploaded files, preventing comprehensive investment analysis. To receive a detailed investment recommendation, please upload complete documentation including pitch deck, financial projections, team information, and market analysis. Current assessment: PASS - Incomplete data.`,
-    confidence: 20
-  };
-}
+// Removed fallback data generation functions - all errors now propagate to show proper error messages
+// instead of displaying dummy/placeholder data
 
 function extractCompanyNameFromDocuments(documents: ProcessedDocument[]): string {
   for (const doc of documents) {

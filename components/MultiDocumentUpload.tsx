@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Upload, X, FileText, TrendingUp, AlertCircle, CheckCircle, Loader2, BarChart3 } from 'lucide-react';
-import EnhancedAnalysisResults from './EnhancedAnalysisResults';
+import AIEnhancedAnalysisWrapper from './AIEnhancedAnalysisWrapper';
 
 interface UploadedFile {
   id: string;
@@ -46,6 +46,7 @@ export default function MultiDocumentUpload() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStage, setAnalysisStage] = useState('');
+  const [activeAISection, setActiveAISection] = useState<'analysis' | 'competitive' | 'memo'>('analysis');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (selectedFiles: FileList | null) => {
@@ -64,7 +65,7 @@ export default function MultiDocumentUpload() {
   const removeFile = (fileId: string) => {
     setFiles(prev => prev.filter(f => f.id !== fileId));
   };
-  
+
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -164,36 +165,73 @@ export default function MultiDocumentUpload() {
     setIsGeneratingPDF(true);
     try {
       const companyName = analysisResult.results?.consolidatedData?.companyInfo?.name || 'Startup';
-      
-      console.log('📄 Requesting PDF generation for:', companyName);
-      
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          analysisData: analysisResult.results,
-          companyName
-        }),
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+      if (activeAISection === 'memo') {
+        // Download Investment Memo PDF
+        const memo = (window as any).__investmentMemo;
+        if (!memo) {
+          alert('Please generate the investment memo first');
+          setIsGeneratingPDF(false);
+          return;
+        }
+
+        console.log('📄 Requesting Investment Memo PDF generation for:', companyName);
+
+        const response = await fetch('/api/generate-memo-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            memo,
+            companyName
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate memo PDF');
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${companyName.replace(/[^a-zA-Z0-9]/g, '_')}_Investment_Memo.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        console.log('✅ Investment Memo PDF downloaded successfully');
+      } else {
+        // Download Analysis Report PDF
+        console.log('📄 Requesting Analysis Report PDF generation for:', companyName);
+
+        const response = await fetch('/api/generate-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            analysisData: analysisResult.results,
+            companyName
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate PDF');
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${companyName.replace(/[^a-zA-Z0-9]/g, '_')}_Investment_Analysis_Report.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        console.log('✅ Analysis Report PDF downloaded successfully');
       }
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${companyName.replace(/[^a-zA-Z0-9]/g, '_')}_Investment_Analysis_Report.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-      
-      console.log('✅ PDF report downloaded successfully');
     } catch (error) {
       console.error('❌ PDF download error:', error);
-      alert('Failed to generate PDF report. Please try again.');
       alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
@@ -206,15 +244,15 @@ export default function MultiDocumentUpload() {
       <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <button 
+            <button
               onClick={() => window.location.href = '/'}
               className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity group"
               aria-label="Go to home page"
             >
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl p-2 shadow-lg group-hover:shadow-xl transition-shadow">
-                <img 
-                  src="/investIQ.png" 
-                  alt="InvestIQ Logo" 
+                <img
+                  src="/investIQ.png"
+                  alt="InvestIQ Logo"
                   className="w-full h-full object-contain filter brightness-0 invert"
                 />
               </div>
@@ -258,26 +296,24 @@ export default function MultiDocumentUpload() {
                   (currentStep === 'analysis' && step === 'upload') ||
                   (currentStep === 'complete' && ['upload', 'analysis'].includes(step))
                 );
-                
+
                 return (
                   <React.Fragment key={step}>
                     <div className="flex flex-col items-center space-y-3">
                       {/* Step Circle */}
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                        isActive 
-                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 text-white shadow-lg' 
-                          : isCompleted 
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isActive
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 text-white shadow-lg'
+                        : isCompleted
                           ? 'bg-green-500 border-green-400 text-white shadow-md'
                           : 'bg-gray-100 border-gray-300 text-gray-400'
-                      }`}>
+                        }`}>
                         <Icon className={`h-5 w-5 ${isActive && step === 'analysis' ? 'animate-pulse' : ''}`} />
                       </div>
-                      
+
                       {/* Step Label */}
                       <div className="text-center">
-                        <div className={`text-sm font-medium ${
-                          isActive ? 'text-gray-900' : isCompleted ? 'text-green-700' : 'text-gray-500'
-                        }`}>
+                        <div className={`text-sm font-medium ${isActive ? 'text-gray-900' : isCompleted ? 'text-green-700' : 'text-gray-500'
+                          }`}>
                           {label}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
@@ -285,14 +321,13 @@ export default function MultiDocumentUpload() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Connection Line */}
                     {index < 2 && (
-                      <div className={`w-20 h-0.5 transition-colors duration-300 ${
-                        (isCompleted || (index === 0 && currentStep !== 'upload')) 
-                          ? 'bg-gradient-to-r from-blue-400 to-purple-400' 
-                          : 'bg-gray-200'
-                      }`}></div>
+                      <div className={`w-20 h-0.5 transition-colors duration-300 ${(isCompleted || (index === 0 && currentStep !== 'upload'))
+                        ? 'bg-gradient-to-r from-blue-400 to-purple-400'
+                        : 'bg-gray-200'
+                        }`}></div>
                     )}
                   </React.Fragment>
                 );
@@ -304,11 +339,11 @@ export default function MultiDocumentUpload() {
 
       {/* Main Content Area - Side by Side Layout */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        
+
         {/* Upload Area - Split Screen Layout */}
         {currentStep === 'upload' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            
+
             {/* Left Side - Title and Key Highlights */}
             <div className="space-y-6">
               <div>
@@ -326,7 +361,7 @@ export default function MultiDocumentUpload() {
               {/* Key Features */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">What You Get:</h3>
-                
+
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -423,7 +458,7 @@ export default function MultiDocumentUpload() {
                   </h3>
                   <p className="text-blue-100 text-sm mt-1">Start your AI-powered analysis</p>
                 </div>
-                
+
                 <div className="p-6">
                   <div className="relative group">
                     <div
@@ -438,26 +473,26 @@ export default function MultiDocumentUpload() {
                       <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform duration-300">
                         <Upload className="h-8 w-8 text-white" />
                       </div>
-                      
+
                       <h4 className="text-xl font-semibold text-gray-800 mb-2">
                         Drop files here
                       </h4>
                       <p className="text-gray-600 mb-4">
                         Or <span className="text-blue-600 font-medium cursor-pointer hover:underline">click to browse</span>
                       </p>
-                      
+
                       <div className="flex items-center justify-center space-x-3 text-sm mb-4">
                         <span className="bg-gray-100 px-3 py-1 rounded-full font-medium">PDF</span>
                         <span className="bg-gray-100 px-3 py-1 rounded-full font-medium">DOCX</span>
                         <span className="bg-gray-100 px-3 py-1 rounded-full font-medium">PPTX</span>
                         <span className="bg-gray-100 px-3 py-1 rounded-full font-medium">TXT</span>
                       </div>
-                      
+
                       <p className="text-xs text-amber-600 font-medium mt-1">
                         ⚠️ Total upload size must be less than 4.5MB (Vercel server limitation)
                       </p>
                     </div>
-                    
+
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -484,54 +519,54 @@ export default function MultiDocumentUpload() {
                           );
                         })()}
                       </div>
-                    {files.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                        <div className="flex items-center space-x-3 flex-1">
-                          <FileText className="h-8 w-8 text-blue-500 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-800 truncate">{file.file.name}</p>
-                            <div className="flex items-center space-x-2 text-sm">
-                              {file.status === 'error' && file.errorMessage ? (
-                                <>
-                                  <AlertCircle className="h-3 w-3 text-red-500" />
-                                  <span className="text-red-600">{file.errorMessage}</span>
-                                </>
-                              ) : (
-                                <span className="text-gray-500">
-                                  {formatFileSize(file.file.size)}
-                                </span>
-                              )}
+                      {files.map((file) => (
+                        <div key={file.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex items-center space-x-3 flex-1">
+                            <FileText className="h-8 w-8 text-blue-500 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-800 truncate">{file.file.name}</p>
+                              <div className="flex items-center space-x-2 text-sm">
+                                {file.status === 'error' && file.errorMessage ? (
+                                  <>
+                                    <AlertCircle className="h-3 w-3 text-red-500" />
+                                    <span className="text-red-600">{file.errorMessage}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-gray-500">
+                                    {formatFileSize(file.file.size)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          <button
+                            onClick={() => removeFile(file.id)}
+                            className="p-1 hover:bg-gray-200 rounded-full transition-colors ml-2"
+                          >
+                            <X className="h-5 w-5 text-gray-500" />
+                          </button>
                         </div>
+                      ))}
+
+                      <div className="flex justify-center pt-6">
                         <button
-                          onClick={() => removeFile(file.id)}
-                          className="p-1 hover:bg-gray-200 rounded-full transition-colors ml-2"
+                          onClick={handleUpload}
+                          disabled={isUploading || files.length === 0 || files.some(f => f.status === 'error')}
+                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                         >
-                          <X className="h-5 w-5 text-gray-500" />
+                          <div className="flex items-center justify-center space-x-2">
+                            <BarChart3 className="h-5 w-5" />
+                            <span>
+                              {files.some(f => f.status === 'error')
+                                ? 'Fix Errors to Continue'
+                                : 'Analyze Documents with AI'
+                              }
+                            </span>
+                          </div>
                         </button>
                       </div>
-                    ))}
-                    
-                    <div className="flex justify-center pt-6">
-                      <button
-                        onClick={handleUpload}
-                        disabled={isUploading || files.length === 0 || files.some(f => f.status === 'error')}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                      >
-                        <div className="flex items-center justify-center space-x-2">
-                          <BarChart3 className="h-5 w-5" />
-                          <span>
-                            {files.some(f => f.status === 'error')
-                              ? 'Fix Errors to Continue'
-                              : 'Analyze Documents with AI'
-                            }
-                          </span>
-                        </div>
-                      </button>
                     </div>
-                  </div>
-                )}
+                  )}
                 </div>
               </div>
             </div>
@@ -557,10 +592,10 @@ export default function MultiDocumentUpload() {
                     <div className="text-xs text-blue-100">Est. {Math.max(1, Math.ceil((100 - analysisProgress) / 10))} min</div>
                   </div>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="w-full bg-blue-800/50 rounded-full h-2 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-white h-2 rounded-full transition-all duration-500 ease-out relative"
                     style={{ width: `${analysisProgress}%` }}
                   >
@@ -580,7 +615,7 @@ export default function MultiDocumentUpload() {
                     <p className="text-gray-600">Generating comprehensive insights from your documents...</p>
                   </div>
                 </div>
-                
+
                 <div className="p-8 space-y-8">
                   {/* Investment Score Card */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -761,62 +796,68 @@ export default function MultiDocumentUpload() {
                       <p className="text-green-100">Your investment insights are ready</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <div className="flex bg-white/20 rounded-lg p-1">
                       <button
                         onClick={() => setViewMode('detailed')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          viewMode === 'detailed'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-white hover:bg-white/10'
-                        }`}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'detailed'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-white hover:bg-white/10'
+                          }`}
                       >
                         Detailed
                       </button>
                       <button
                         onClick={() => setViewMode('summary')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          viewMode === 'summary'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-white hover:bg-white/10'
-                        }`}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'summary'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-white hover:bg-white/10'
+                          }`}
                       >
                         Summary
                       </button>
                     </div>
-                    
+
                     <button
                       onClick={handlePDFDownload}
-                      disabled={isGeneratingPDF}
+                      disabled={isGeneratingPDF || activeAISection === 'competitive'}
                       className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-medium hover:bg-white/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 border border-white/30"
                     >
                       <BarChart3 className="h-4 w-4" />
                       <span>
-                        {isGeneratingPDF ? 'Generating PDF Report...' : 'Download Professional Report (PDF)'}
+                        {isGeneratingPDF 
+                          ? 'Generating PDF...' 
+                          : activeAISection === 'memo'
+                            ? 'Download Investment Memo (PDF)'
+                            : activeAISection === 'competitive'
+                              ? 'No PDF Available'
+                              : 'Download Analysis Report (PDF)'}
                       </span>
+                    </button>
+                    
+                    <button
+                      onClick={resetUpload}
+                      className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      Analyze New Documents
                     </button>
                   </div>
                 </div>
               </div>
-              
-              <div className="p-6">
-                <EnhancedAnalysisResults 
-                  analysisData={analysisResult.results} 
-                  onNewAnalysis={resetUpload}
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                />
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <button
-                onClick={resetUpload}
-                className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-              >
-                Analyze New Documents
-              </button>
+
+              {/* Analysis Results Content */}
+              {analysisResult?.results?.analysis && (
+                <div className="p-6">
+                  <AIEnhancedAnalysisWrapper
+                    analysisData={analysisResult.results}
+                    onNewAnalysis={resetUpload}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    onActiveFeatureChange={setActiveAISection}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}

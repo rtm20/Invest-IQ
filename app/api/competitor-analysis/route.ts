@@ -172,30 +172,10 @@ CRITICAL:
       }
     } catch (geminiError) {
       console.error('⚠️ Gemini AI parsing failed:', geminiError);
-      console.log('📋 Falling back to basic competitor extraction from search results');
+      console.log('📋 No competitor data could be extracted from AI analysis');
     }
     
-    // FALLBACK: Create basic competitors from search results if Gemini fails
-    console.log('🔄 Using fallback: Creating competitors from search titles');
-    const fallbackCompetitors = limitedResults
-      .filter(r => r.title && r.snippet)
-      .map((result, index) => ({
-        name: result.title.split('|')[0].split('-')[0].trim().substring(0, 50),
-        fundingRaised: "Not Disclosed",
-        valuation: "Not Disclosed",
-        revenueGrowth: "Not Disclosed",
-        employees: "Not Disclosed",
-        keyHighlight: result.snippet.substring(0, 100) + '...',
-        dataQuality: "estimated"
-      }))
-      .slice(0, 3);
-    
-    if (fallbackCompetitors.length > 0) {
-      console.log('✅ Created', fallbackCompetitors.length, 'competitors from search fallback');
-      return fallbackCompetitors;
-    }
-    
-    console.log('⚠️ No competitors could be extracted');
+    console.log('⚠️ No competitors could be extracted - returning empty array');
     return [];
     
   } catch (error) {

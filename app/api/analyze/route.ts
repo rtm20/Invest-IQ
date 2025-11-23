@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
             metadata: {
                 textLength: text.length,
                 processedAt: new Date().toISOString(),
-                model: (process.env.NEXT_PUBLIC_ENABLE_REAL_AI === 'true' || process.env.ENABLE_REAL_AI === 'true') ? 'gemini-2.5-pro' : 'demo-mode',
+                model: (process.env.NEXT_PUBLIC_ENABLE_REAL_AI === 'true' || process.env.ENABLE_REAL_AI === 'true') ? 'gemini-2.0-flash' : 'demo-mode',
                 confidence: fullAnalysis.confidence,
                 processingTime: fullAnalysis.processingTime,
                 analysisId: fullAnalysis.analysisId

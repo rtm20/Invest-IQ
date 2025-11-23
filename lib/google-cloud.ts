@@ -7,7 +7,6 @@ import os from 'os';
 import path from 'path';
 import { fileCompressor } from './file-compressor';
 const pdfParse = require('pdf-parse');
-const mammoth = require('mammoth');
 
 // Environment configuration
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_PROJECT_ID || 'ai-startup-analyst-hackathon';
@@ -364,17 +363,14 @@ export const visionService = {
   },
 
   /**
-   * Extract text from DOCX files using mammoth
+   * Extract text from DOCX files - using Vision API as primary method
    */
   async extractTextFromDocx(buffer: Buffer): Promise<string> {
     try {
-      console.log('📄 Processing DOCX with mammoth parser...');
+      console.log('📄 Processing DOCX with Vision API (more reliable than mammoth)...');
       
-      const result = await mammoth.extractRawText({ buffer });
-      const text = result.value;
-      
-      console.log(`✅ DOCX text extracted: ${text.length} characters`);
-      return text;
+      // Vision API can handle DOCX files directly and is more reliable
+      return await this.extractTextWithVisionAPI(buffer, 'document.docx');
     } catch (error) {
       console.error('❌ DOCX processing error:', error);
       throw new Error(`DOCX text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -418,6 +414,44 @@ export const visionService = {
 // Gemini AI Service
 export const geminiService = {
   /**
+   * Retry helper with exponential backoff for rate limit errors
+   */
+  async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    maxRetries: number = 3,
+    initialDelay: number = 1000
+  ): Promise<T> {
+    let lastError: Error | undefined;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as Error;
+        
+        // Check if it's a rate limit error (429)
+        const is429Error = error instanceof Error && 
+          (error.message.includes('429') || 
+           error.message.includes('Too Many Requests') ||
+           error.message.includes('RESOURCE_EXHAUSTED'));
+        
+        if (!is429Error || attempt === maxRetries - 1) {
+          // Not a rate limit error, or last attempt - throw immediately
+          throw error;
+        }
+        
+        // Calculate delay with exponential backoff
+        const delay = initialDelay * Math.pow(2, attempt);
+        console.log(`⏳ Rate limit hit (429). Retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError;
+  },
+
+  /**
    * Analyze startup data using Gemini Pro
    */
   async analyzeStartupData(
@@ -427,26 +461,65 @@ export const geminiService = {
     try {
       console.log(`🤖 Analyzing ${analysisType} data with Gemini AI...`);
 
-      const model = vertex_ai.getGenerativeModel({
-        model: 'gemini-2.5-pro',
-        generationConfig: {
-          maxOutputTokens: 4096,
-          temperature: 0.3,
-          topP: 0.8,
-        },
-      });
+      return await this.retryWithBackoff(async () => {
+        const model = vertex_ai.getGenerativeModel({
+          model: 'gemini-2.0-flash',
+          generationConfig: {
+            maxOutputTokens: 8192,
+            temperature: 0.2,
+            topP: 0.95,
+            responseMimeType: 'application/json',
+          },
+        });
 
-      const prompt = this.getAnalysisPrompt(text, analysisType);
-      
-      const result = await model.generateContent(prompt);
-      const response = result.response;
-      const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const prompt = this.getAnalysisPrompt(text, analysisType);
+        
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-      console.log(`✅ Gemini analysis completed for ${analysisType}`);
-      
-      return this.parseGeminiResponse(responseText, analysisType);
+        console.log(`✅ Gemini analysis completed for ${analysisType}`);
+        
+        return this.parseGeminiResponse(responseText, analysisType);
+      }, 3, 2000); // 3 retries, starting with 2 second delay
     } catch (error) {
       console.error('❌ Gemini AI analysis error:', error);
+      throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
+  /**
+   * Call Gemini with custom prompt - returns raw JSON response without parsing
+   */
+  async callGeminiRaw(
+    prompt: string,
+    maxTokens: number = 2000,
+    temperature: number = 0.3
+  ): Promise<string> {
+    try {
+      console.log('🤖 Calling Gemini AI with custom prompt...');
+
+      return await this.retryWithBackoff(async () => {
+        const model = vertex_ai.getGenerativeModel({
+          model: 'gemini-2.0-flash',
+          generationConfig: {
+            maxOutputTokens: maxTokens,
+            temperature: temperature,
+            topP: 0.95,
+            responseMimeType: 'application/json',
+          },
+        });
+        
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+        console.log('✅ Gemini raw response received:', responseText.length, 'chars');
+        
+        return responseText;
+      }, 3, 2000);
+    } catch (error) {
+      console.error('❌ Gemini raw call error:', error);
       throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
@@ -458,15 +531,16 @@ export const geminiService = {
     try {
       console.log('📝 Generating executive summary with Gemini...');
 
-      const model = vertex_ai.getGenerativeModel({
-        model: 'gemini-2.5-pro',
-        generationConfig: {
-          maxOutputTokens: 1024,
-          temperature: 0.4,
-        },
-      });
+      return await this.retryWithBackoff(async () => {
+        const model = vertex_ai.getGenerativeModel({
+          model: 'gemini-2.0-flash',
+          generationConfig: {
+            maxOutputTokens: 1024,
+            temperature: 0.4,
+          },
+        });
 
-      const prompt = `
+        const prompt = `
 Based on the following startup analysis data, generate a comprehensive executive summary 
 that highlights the key investment opportunity, risks, and recommendation:
 
@@ -483,11 +557,12 @@ Please provide a clear, concise executive summary (200-300 words) suitable for i
 Format as plain text, not JSON.
 `;
 
-      const result = await model.generateContent(prompt);
-      const summary = result.response.candidates?.[0]?.content?.parts?.[0]?.text || 'Executive summary generation failed. Please review individual analysis sections.';
+        const result = await model.generateContent(prompt);
+        const summary = result.response.candidates?.[0]?.content?.parts?.[0]?.text || 'Executive summary generation failed. Please review individual analysis sections.';
 
-      console.log('✅ Executive summary generated');
-      return summary;
+        console.log('✅ Executive summary generated');
+        return summary;
+      }, 3, 2000);
     } catch (error) {
       console.error('❌ Summary generation error:', error);
       return 'Executive summary generation failed. Please review individual analysis sections.';
@@ -811,79 +886,8 @@ IMPORTANT: Return ONLY the JSON object. No additional text, explanations, or for
       console.log('🧹 Cleaned preview:');
       console.log(cleaned.substring(0, 400) + (cleaned.length > 400 ? '\n...[TRUNCATED]' : ''));
       
-      // Return default structure based on analysis type
-      const defaults = {
-        company: { 
-          companyInfo: {
-            name: 'Unknown Company',
-            industry: 'Unknown',
-            description: 'Could not extract company information'
-          }, 
-          confidence: 50 
-        },
-        financial: { 
-          financialMetrics: {
-            currentRevenue: 0,
-            revenueGrowthRate: 0,
-            grossMargin: 0
-          }, 
-          unitEconomics: {
-            cac: 0,
-            ltv: 0,
-            paybackPeriod: 0,
-            churnRate: 0
-          }, 
-          confidence: 50 
-        },
-        team: { 
-          founders: [], 
-          totalEmployees: 0, 
-          keyHires: [], 
-          advisors: [], 
-          confidence: 50 
-        },
-        market: { 
-          marketInfo: {
-            tam: 0,
-            sam: 0,
-            som: 0,
-            marketGrowthRate: 0,
-            competitors: [],
-            marketPosition: 'Unknown'
-          }, 
-          confidence: 50 
-        },
-        risk: { 
-          riskFlags: [{
-            id: 'parse-error',
-            type: 'technical',
-            severity: 'low',
-            title: 'Analysis Parsing Error',
-            description: 'Could not parse AI response',
-            evidence: ['Response parsing failed'],
-            confidence: 50,
-            impact: 'Limited analysis available',
-            recommendation: 'Retry analysis with different document'
-          }], 
-          confidence: 50 
-        },
-        recommendation: { 
-          recommendation: { 
-            decision: 'hold', 
-            score: 50,
-            reasoning: ['Insufficient data for recommendation'],
-            keyStrengths: [],
-            keyWeaknesses: [],
-            investmentThesis: 'Unable to generate recommendation due to parsing error',
-            suggestedValuation: 0,
-            suggestedCheck: 0,
-            nextSteps: ['Retry analysis', 'Provide clearer documentation']
-          }, 
-          confidence: 50 
-        }
-      };
-      
-      return defaults[analysisType as keyof typeof defaults] || { confidence: 50 };
+      // Throw error instead of returning defaults - force proper response
+      throw new Error(`Failed to parse Gemini AI response for ${analysisType}. The AI returned incomplete or malformed JSON. Please retry the analysis. Original error: ${error instanceof Error ? error.message : 'Unknown parsing error'}`);
     }
   }
 };
@@ -931,7 +935,7 @@ export const healthCheck = {
     try {
       // Test Vertex AI
       const model = vertex_ai.getGenerativeModel({
-        model: 'gemini-2.5-pro'
+        model: 'gemini-2.0-flash'
       });
       
       const result = await model.generateContent('Hello, this is a test.');

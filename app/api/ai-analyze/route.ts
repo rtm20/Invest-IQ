@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         textLength: text.length,
         processedAt: new Date().toISOString(),
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.0-flash',
         confidence: analysisResult.confidence || 'unknown'
       }
     });
