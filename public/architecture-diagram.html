@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invest-IQ - Architecture Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            padding: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .diagram {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-bottom: 50px;
+        }
+
+        .flow {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .box {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .box-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .box-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .arrow {
+            font-size: 40px;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .arrow-vertical {
+            text-align: center;
+            font-size: 40px;
+            color: #667eea;
+        }
+
+        /* Special colors for different layers */
+        .user-layer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .client-layer {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .api-layer {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .google-layer {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .external-layer {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .hosting-layer {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        /* Split box for services */
+        .split-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .benefits {
+            margin-top: 40px;
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .benefits-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00b894;
+            margin-bottom: 20px;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .benefit {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram">
+        <div class="title">Invest-IQ Architecture</div>
+
+        <div class="flow">
+            <!-- Layer 1: User Interface -->
+            <div class="box user-layer">
+                <div class="box-title">👤 USER INTERFACE</div>
+                <div class="box-subtitle">Next.js 14 + React + Tailwind CSS</div>
+            </div>
+
+            <div class="arrow-vertical">↓</div>
+
+            <!-- Layer 2: Client Processing -->
+            <div class="box client-layer">
+                <div class="box-title">💻 CLIENT-SIDE PROCESSING</div>
+                <div class="box-subtitle">File Compression • Text Extraction • Validation</div>
+            </div>
+
+            <div class="arrow-vertical">↓</div>
+
+            <!-- Layer 3: API Routes -->
+            <div class="box api-layer">
+                <div class="box-title">⚡ API ROUTES (Serverless)</div>
+                <div class="box-subtitle">/upload • /ai-analyze • /competitor-analysis • /generate-pdf</div>
+            </div>
+
+            <div class="arrow-vertical">↓</div>
+
+            <!-- Layer 4: External Services (Split) -->
+            <div class="split-row">
+                <div class="box google-layer">
+                    <div class="box-title">🔵 GOOGLE AI</div>
+                    <div class="box-subtitle">Gemini 2.0 Flash<br>Cloud Vision API<br>Custom Search API</div>
+                </div>
+                <div class="box external-layer">
+                    <div class="box-title">🌐 EXTERNAL APIs</div>
+                    <div class="box-subtitle">Finnhub<br>IPApi<br>Funding Stats</div>
+                </div>
+            </div>
+
+            <div class="arrow-vertical">↓</div>
+
+            <!-- Layer 5: Hosting -->
+            <div class="box hosting-layer">
+                <div class="box-title">☁️ VERCEL HOSTING</div>
+                <div class="box-subtitle">Global Edge Network • Auto-scaling • Zero Downtime</div>
+            </div>
+        </div>
+
+        <!-- Benefits -->
+        <div class="benefits">
+            <div class="benefits-title">✨ Architecture Benefits</div>
+            <div class="benefits-grid">
+                <div class="benefit">⚡ Serverless</div>
+                <div class="benefit">🚀 40-60s Analysis</div>
+                <div class="benefit">🔒 Secure</div>
+                <div class="benefit">🛡️ Reliable</div>
+                <div class="benefit">🌍 Global CDN</div>
+                <div class="benefit">💰 $0.35/analysis</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

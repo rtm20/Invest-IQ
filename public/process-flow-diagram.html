@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invest-IQ - User Journey Process Flow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 20px;
+            color: #666;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            transform: translateX(-50%);
+        }
+
+        .step {
+            position: relative;
+            margin-bottom: 80px;
+            display: flex;
+            align-items: flex-start;
+            gap: 40px;
+        }
+
+        .step:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .step:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            z-index: 10;
+        }
+
+        .step-content {
+            flex: 1;
+            max-width: 45%;
+        }
+
+        .step:nth-child(odd) .step-content {
+            text-align: right;
+            padding-right: 100px;
+        }
+
+        .step:nth-child(even) .step-content {
+            text-align: left;
+            padding-left: 100px;
+        }
+
+        .step-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid #667eea;
+        }
+
+        .step-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        .step-time {
+            font-size: 16px;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .step-description {
+            font-size: 16px;
+            color: #444;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .step-description ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .step-description li {
+            padding: 5px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .step-description li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .value-box {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #e17055;
+        }
+
+        .value-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #d63031;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .value-title::before {
+            content: '💎';
+            font-size: 20px;
+        }
+
+        .value-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .value-list li {
+            padding: 5px 0;
+            color: #2d3436;
+            font-weight: 500;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .value-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #e17055;
+            font-weight: bold;
+        }
+
+        .arrow {
+            position: absolute;
+            left: 50%;
+            bottom: -60px;
+            transform: translateX(-50%);
+            font-size: 40px;
+            color: #667eea;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            50% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 3px solid #667eea;
+        }
+
+        .footer h2 {
+            font-size: 32px;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+        }
+
+        .footer p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 30px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Invest-IQ User Journey</h1>
+            <p>From Document Upload to Investment Decision in 90 Seconds</p>
+        </div>
+
+        <div class="timeline">
+            <!-- Step 1 -->
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-box">
+                        <div class="step-title">📄 Document Upload</div>
+                        <div class="step-time">⏱️ 30 seconds</div>
+                        <div class="step-description">
+                            <ul>
+                                <li>User lands on clean upload interface</li>
+                                <li>Drag-and-drop 3+ documents or click to browse</li>
+                                <li>Supported: PDF, DOCX, PPTX, XLSX, TXT</li>
+                                <li>Size limit: 4.5MB per file (client-side compression)</li>
+                            </ul>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-title">Value at This Step</div>
+                            <ul class="value-list">
+                                <li>Simple, intuitive interface (no training needed)</li>
+                                <li>Multi-document upload (all context at once)</li>
+                                <li>Format flexibility (works with what they have)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="arrow">↓</div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-box">
+                        <div class="step-title">🧠 AI Processing</div>
+                        <div class="step-time">⏱️ 60-90 seconds</div>
+                        <div class="step-description">
+                            <ul>
+                                <li>Real-time progress bar (0% → 90%)</li>
+                                <li>🔍 Extracting data from documents...</li>
+                                <li>🧠 Analyzing company information...</li>
+                                <li>📊 Evaluating market opportunity...</li>
+                                <li>📈 Calculating investment scores...</li>
+                            </ul>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-title">Value at This Step</div>
+                            <ul class="value-list">
+                                <li>Transparency into AI process</li>
+                                <li>Confidence that analysis is thorough</li>
+                                <li>No "black box" waiting</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="arrow">↓</div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-box">
+                        <div class="step-title">📊 Analysis Dashboard</div>
+                        <div class="step-time">⏱️ Immediate</div>
+                        <div class="step-description">
+                            <ul>
+                                <li>Investment Score: 74/100 with INVEST/PASS/SKIP</li>
+                                <li>6 category scores: Founder (16/20), Market (18/25), Product (14/20), Traction (10/15), Financials (8/12), Risk (8/8)</li>
+                                <li>Market Intelligence: Competitors, funding trends, market size</li>
+                                <li>Geographic analysis & sector benchmarking</li>
+                            </ul>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-title">Value at This Step</div>
+                            <ul class="value-list">
+                                <li>Instant investment recommendation</li>
+                                <li>Visual breakdown of strengths/weaknesses</li>
+                                <li>Market context for decision-making</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="arrow">↓</div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-box">
+                        <div class="step-title">🔍 Score Transparency</div>
+                        <div class="step-time">⏱️ Click to Explore</div>
+                        <div class="step-description">
+                            <ul>
+                                <li>Click Investment Score card → scroll to detailed breakdown</li>
+                                <li>See all 18 factors with individual scores</li>
+                                <li>Each factor includes AI assessment</li>
+                                <li>Example: "Founder Experience: 6/8 pts - Strong domain expertise with 8+ years in fintech..."</li>
+                            </ul>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-title">Value at This Step</div>
+                            <ul class="value-list">
+                                <li>Complete explainability (no hidden reasoning)</li>
+                                <li>Detailed feedback for due diligence</li>
+                                <li>Identify specific areas of concern/strength</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="arrow">↓</div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <div class="step-box">
+                        <div class="step-title">📑 PDF Export</div>
+                        <div class="step-time">⏱️ 5 seconds</div>
+                        <div class="step-description">
+                            <ul>
+                                <li>Click "Download Report" button</li>
+                                <li>Generates comprehensive 12-page PDF</li>
+                                <li>Includes all scores, assessments, market intelligence</li>
+                                <li>Professional formatting for investment committees</li>
+                            </ul>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-title">Value at This Step</div>
+                            <ul class="value-list">
+                                <li>Shareable with stakeholders</li>
+                                <li>Permanent record of analysis</li>
+                                <li>Ready for investment memo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h2>✅ Complete Journey: 90 Seconds</h2>
+            <p>From upload to investment decision with full transparency</p>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">300x</div>
+                    <div class="stat-label">Faster than manual</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">18</div>
+                    <div class="stat-label">Investment factors</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Transparent scoring</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
