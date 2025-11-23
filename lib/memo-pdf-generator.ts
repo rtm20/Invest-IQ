@@ -205,8 +205,13 @@ export class InvestmentMemoPDFGenerator {
             this.yPos = this.margin;
         }
 
-        // Draw background
-        this.pdf.setFillColor(...color, 0.1);
+        // Draw light background (much lighter opacity)
+        const lightColor: [number, number, number] = [
+            Math.min(255, color[0] + 180),
+            Math.min(255, color[1] + 180),
+            Math.min(255, color[2] + 180)
+        ];
+        this.pdf.setFillColor(...lightColor);
         this.pdf.rect(this.margin, this.yPos, boxWidth, boxHeight, 'F');
 
         // Draw border
@@ -221,11 +226,11 @@ export class InvestmentMemoPDFGenerator {
         this.pdf.setTextColor(...color);
         this.pdf.text(this.cleanText(title), this.margin + boxPadding, this.yPos);
 
-        // Add content
+        // Add content (dark text for readability)
         this.yPos += 2;
         this.pdf.setFontSize(10);
         this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setTextColor(50, 50, 50);
+        this.pdf.setTextColor(40, 40, 40);
 
         for (const line of contentLines) {
             this.yPos += this.lineHeight;
@@ -445,7 +450,7 @@ export class InvestmentMemoPDFGenerator {
         if (memo.riskAssessment.redFlags && memo.riskAssessment.redFlags.length > 0) {
             this.addSubsectionTitle('Red Flags', [234, 179, 8]);
             memo.riskAssessment.redFlags.forEach((flag) => {
-                this.addBulletPoint(flag, '🚩');
+                this.addBulletPoint(flag, '▲');
             });
         }
         this.addSeparator();
@@ -499,14 +504,16 @@ export class InvestmentMemoPDFGenerator {
         
         // Decision box
         this.checkPageBreak(30);
-        // Note: PASS means DON'T invest (rejection), so it's RED
-        // INVEST means DO invest (approval), so it's GREEN
+        // Recommendation color logic:
+        // INVEST = Green (go ahead, positive)
+        // MAYBE = Yellow (caution, needs consideration)
+        // PASS = Orange (stop, don't proceed)
         const decisionColors: { [key: string]: [number, number, number] } = {
             'Strong Invest': [22, 163, 74],   // Dark green - strong buy
             'Invest': [34, 197, 94],           // Green - buy
             'Maybe': [234, 179, 8],            // Yellow - hold/consider
-            'Pass': [239, 68, 68],             // Red - don't invest
-            'Strong Pass': [220, 38, 38]       // Dark red - strong rejection
+            'Pass': [249, 115, 22],            // Orange - don't invest
+            'Strong Pass': [234, 88, 12]       // Dark orange - strong rejection
         };
         
         const decisionColor = decisionColors[memo.recommendation.decision] || [107, 114, 128];
