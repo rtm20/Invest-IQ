@@ -502,7 +502,7 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
               </RechartsPie>
             </ResponsiveContainer>
             <div className="flex flex-col justify-center space-y-3">
-              {riskData.map((risk, idx) => (
+              {riskData.map((risk: any, idx: number) => (
                 <div key={idx} className="flex items-start">
                   <div 
                     className="w-4 h-4 rounded-full mr-3 mt-0.5 flex-shrink-0" 

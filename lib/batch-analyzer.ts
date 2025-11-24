@@ -310,7 +310,7 @@ export class BatchCompanyAnalyzer {
         companyName: a!.companyName,
         score: a!.analysis.investmentRecommendation.score,
         reasoning: a!.analysis.investmentRecommendation.reasoning,
-        recommendation: a!.analysis.investmentRecommendation.decision,
+        recommendation: a!.analysis.investmentRecommendation.decision === 'Reject' ? 'Pass' : a!.analysis.investmentRecommendation.decision as 'Pass' | 'Maybe' | 'Invest' | 'Strong Invest',
         suggestedValuation: a!.analysis.investmentRecommendation.valuation.suggested
       }))
       .sort((a, b) => b.score - a.score)

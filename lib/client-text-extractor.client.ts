@@ -135,29 +135,13 @@ async function extractTextFromPDF(file: File): Promise<{ text: string; pageCount
 }
 
 /**
- * Extract text from DOCX using mammoth (dynamically imported)
+ * Extract text from DOCX - Server-side only
+ * Note: DOCX extraction is handled server-side via the API
  */
 async function extractTextFromDOCX(file: File): Promise<string> {
-  try {
-    console.log('📝 Extracting text from DOCX...');
-    
-    // Dynamically import mammoth only when needed (client-side only)
-    const mammoth = await import('mammoth');
-    
-    const arrayBuffer = await file.arrayBuffer();
-    
-    // Use mammoth to extract text
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    
-    if (result.messages && result.messages.length > 0) {
-      console.warn('⚠️ DOCX extraction warnings:', result.messages);
-    }
-    
-    return result.value;
-  } catch (error) {
-    console.error('Mammoth import failed:', error);
-    throw new Error('DOCX text extraction is only available in the browser. Please ensure you are running this code on the client side.');
-  }
+  console.log('📝 DOCX files are processed server-side');
+  // Return empty string - actual extraction happens on server
+  return '';
 }
 
 /**

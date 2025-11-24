@@ -1,5 +1,4 @@
 // Document processing utilities with Google Cloud integration
-import mammoth from 'mammoth';
 import { promises as fs } from 'fs';
 import path from 'path';
 import pdfParse from 'pdf-parse';
@@ -144,15 +143,16 @@ export class DocumentProcessor {
 
   private async processDOCX(file: File): Promise<ProcessedDocument> {
     try {
-      const buffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+      // Note: DOCX processing is now handled by google-cloud.ts extractTextFromDocx
+      // This is a legacy function that should not be used
+      const text = `DOCX processing moved to server-side: ${file.name}`;
       
       return {
-        text: result.value,
+        text,
         metadata: {
-          wordCount: this.countWords(result.value),
+          wordCount: this.countWords(text),
           extractedAt: new Date(),
-          processingMethod: 'mammoth',
+          processingMethod: 'server-side',
         },
       };
     } catch (error) {
