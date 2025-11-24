@@ -290,11 +290,11 @@ export default function CompetitiveLandscape({ landscape, companyName }: Competi
                                 <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
                                     <div>
                                         <p className="font-semibold text-purple-900 mb-1">Market Position:</p>
-                                        <p className="text-gray-600">Leader (100) > Challenger (75) > Niche (50) > Emerging (35)</p>
+                                        <p className="text-gray-600">Leader (100) &gt; Challenger (75) &gt; Niche (50) &gt; Emerging (35)</p>
                                     </div>
                                     <div>
                                         <p className="font-semibold text-orange-900 mb-1">Threat Level:</p>
-                                        <p className="text-gray-600">High (85) > Medium (60) > Low (35)</p>
+                                        <p className="text-gray-600">High (85) &gt; Medium (60) &gt; Low (35)</p>
                                     </div>
                                 </div>
                                 <p className="text-xs text-gray-500 text-center mt-3">
