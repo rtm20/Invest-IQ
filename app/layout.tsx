@@ -50,8 +50,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.className}>
-      <body className="font-sans bg-gray-50 antialiased">
+    <html lang="en" className={inter.className} suppressHydrationWarning>
+      <body className="font-sans bg-gray-50 dark:bg-gray-950 antialiased transition-colors duration-300">
         <Providers>
           {children}
           <Toaster

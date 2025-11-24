@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -8,8 +9,10 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {children}
-    </div>
+    <ThemeProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+        {children}
+      </div>
+    </ThemeProvider>
   );
 }
