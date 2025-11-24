@@ -107,13 +107,13 @@ export default function MultiDocumentUpload() {
         });
       }, 550); // Update every 550ms
 
-      // Update stages to match realistic API processing time (~60 seconds)
-      setTimeout(() => setAnalysisStage('🔍 Extracting data from documents...'), 8000); // 8s
-      setTimeout(() => setAnalysisStage('🧠 Analyzing company information with AI...'), 18000); // 18s
-      setTimeout(() => setAnalysisStage('📊 Evaluating market opportunity...'), 28000); // 28s
-      setTimeout(() => setAnalysisStage('💼 Assessing business model...'), 38000); // 38s
-      setTimeout(() => setAnalysisStage('📈 Calculating investment scores...'), 48000); // 48s
-      setTimeout(() => setAnalysisStage('✅ Finalizing comprehensive report...'), 56000); // 56s
+      // Update stages to match realistic API processing time (~30 seconds)
+      setTimeout(() => setAnalysisStage('🔍 Extracting data from documents...'), 3000); // 3s
+      setTimeout(() => setAnalysisStage('🧠 Analyzing company information with AI...'), 8000); // 8s
+      setTimeout(() => setAnalysisStage('📊 Evaluating market opportunity...'), 13000); // 13s
+      setTimeout(() => setAnalysisStage('💼 Assessing business model...'), 18000); // 18s
+      setTimeout(() => setAnalysisStage('📈 Calculating investment scores...'), 23000); // 23s
+      setTimeout(() => setAnalysisStage('✅ Finalizing comprehensive report...'), 27000); // 27s
 
       console.log('🚀 Starting AI analysis...');
 
