@@ -494,7 +494,7 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
                   label={({ name }) => name}
                   labelLine={{ stroke: '#6b7280', strokeWidth: 1 }}
                 >
-                  {riskData.map((entry, index) => (
+                  {riskData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

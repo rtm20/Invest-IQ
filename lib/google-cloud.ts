@@ -525,7 +525,7 @@ export const visionService = {
           batchSize: 2,
         };
         
-        const features = [{type: 'DOCUMENT_TEXT_DETECTION'}];
+        const features = [{type: 'DOCUMENT_TEXT_DETECTION' as const}];
         const request = {
           requests: [{
             inputConfig,
