@@ -191,7 +191,7 @@ export interface RiskAnalysis {
 }
 
 export interface InvestmentRecommendation {
-  decision: 'Pass' | 'Maybe' | 'Invest' | 'Strong Invest';
+  decision: 'Reject' | 'Maybe' | 'Invest' | 'Strong Invest';
   score: number; // 0-100
   confidence: number; // 0-100
   reasoning: string[];

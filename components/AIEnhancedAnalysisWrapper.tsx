@@ -153,13 +153,13 @@ export default function AIEnhancedAnalysisWrapper({
                                 <span>Analysis Report</span>
                             </button>
 
-                            {/* Competitive Intelligence */}
+                            {/* Competitive Intelligence - PREMIUM */}
                             <button
                                 onClick={handleLoadCompetitiveIntelligence}
                                 disabled={isLoadingCompetitors}
-                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center space-x-2 ${activeAIFeature === 'competitive'
-                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                className={`relative px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center space-x-2 ${activeAIFeature === 'competitive'
+                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg ring-2 ring-purple-300'
+                                        : 'bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 hover:from-purple-100 hover:to-pink-100 border-2 border-purple-200'
                                     } ${isLoadingCompetitors ? 'opacity-75 cursor-not-allowed' : ''}`}
                             >
                                 {isLoadingCompetitors ? (
@@ -168,18 +168,21 @@ export default function AIEnhancedAnalysisWrapper({
                                     <Target className="h-4 w-4" />
                                 )}
                                 <span>{isLoadingCompetitors ? 'Loading...' : 'Competitive Intelligence'}</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900">
+                                    PRO
+                                </span>
                                 {!competitiveLandscape && !isLoadingCompetitors && (
                                     <Zap className="h-3 w-3 text-yellow-400" />
                                 )}
                             </button>
 
-                            {/* Investment Memo */}
+                            {/* Investment Memo - PREMIUM */}
                             <button
                                 onClick={handleGenerateInvestmentMemo}
                                 disabled={isGeneratingMemo}
-                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center space-x-2 ${activeAIFeature === 'memo'
-                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                className={`relative px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center space-x-2 ${activeAIFeature === 'memo'
+                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg ring-2 ring-indigo-300'
+                                        : 'bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 hover:from-indigo-100 hover:to-purple-100 border-2 border-indigo-200'
                                     } ${isGeneratingMemo ? 'opacity-75 cursor-not-allowed' : ''}`}
                             >
                                 {isGeneratingMemo ? (
@@ -188,6 +191,9 @@ export default function AIEnhancedAnalysisWrapper({
                                     <Sparkles className="h-4 w-4" />
                                 )}
                                 <span>{isGeneratingMemo ? 'Generating...' : 'Investment Memo'}</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900">
+                                    PRO
+                                </span>
                                 {!investmentMemo && !isGeneratingMemo && (
                                     <Zap className="h-3 w-3 text-yellow-400" />
                                 )}

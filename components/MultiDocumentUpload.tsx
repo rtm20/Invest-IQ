@@ -798,26 +798,29 @@ export default function MultiDocumentUpload() {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <div className="flex bg-white/20 rounded-lg p-1">
-                      <button
-                        onClick={() => setViewMode('detailed')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'detailed'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-white hover:bg-white/10'
-                          }`}
-                      >
-                        Detailed
-                      </button>
-                      <button
-                        onClick={() => setViewMode('summary')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'summary'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-white hover:bg-white/10'
-                          }`}
-                      >
-                        Summary
-                      </button>
-                    </div>
+                    {/* Detailed/Summary Toggle - Only show for Analysis Report */}
+                    {activeAISection === 'analysis' && (
+                      <div className="flex bg-white/20 rounded-lg p-1">
+                        <button
+                          onClick={() => setViewMode('detailed')}
+                          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'detailed'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-white hover:bg-white/10'
+                            }`}
+                        >
+                          Detailed
+                        </button>
+                        <button
+                          onClick={() => setViewMode('summary')}
+                          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'summary'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-white hover:bg-white/10'
+                            }`}
+                        >
+                          Summary
+                        </button>
+                      </div>
+                    )}
 
                     <button
                       onClick={handlePDFDownload}

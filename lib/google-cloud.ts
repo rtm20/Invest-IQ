@@ -7,6 +7,8 @@ import os from 'os';
 import path from 'path';
 import { fileCompressor } from './file-compressor';
 const pdfParse = require('pdf-parse');
+const JSZip = require('jszip');
+const xml2js = require('xml2js');
 
 // Environment configuration
 const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_PROJECT_ID || 'ai-startup-analyst-hackathon';
@@ -363,17 +365,71 @@ export const visionService = {
   },
 
   /**
-   * Extract text from DOCX files - using Vision API as primary method
+   * Extract text from DOCX files - using JSZip to extract XML content
    */
   async extractTextFromDocx(buffer: Buffer): Promise<string> {
     try {
-      console.log('📄 Processing DOCX with Vision API (more reliable than mammoth)...');
+      console.log('📄 Processing DOCX with JSZip...');
       
-      // Vision API can handle DOCX files directly and is more reliable
-      return await this.extractTextWithVisionAPI(buffer, 'document.docx');
+      // DOCX is a ZIP file containing XML. Extract document.xml
+      const zip = await JSZip.loadAsync(buffer);
+      const documentXml = await zip.file('word/document.xml')?.async('string');
+      
+      if (!documentXml) {
+        console.log('⚠️ No document.xml found in DOCX. File may be corrupted.');
+        return '';
+      }
+      
+      // Parse XML and extract text from <w:t> tags
+      const parser = new xml2js.Parser();
+      const result = await parser.parseStringPromise(documentXml);
+      
+      let text = '';
+      
+      // Navigate through the XML structure to find text elements
+      const extractText = (obj: any): void => {
+        if (!obj) return;
+        
+        // Text is in <w:t> tags
+        if (obj['w:t']) {
+          if (Array.isArray(obj['w:t'])) {
+            obj['w:t'].forEach((t: any) => {
+              if (typeof t === 'string') text += t + ' ';
+              else if (t._) text += t._ + ' ';
+            });
+          } else if (typeof obj['w:t'] === 'string') {
+            text += obj['w:t'] + ' ';
+          } else if (obj['w:t']._) {
+            text += obj['w:t']._ + ' ';
+          }
+        }
+        
+        // Recursively search all properties
+        if (typeof obj === 'object') {
+          Object.values(obj).forEach(value => {
+            if (Array.isArray(value)) {
+              value.forEach(item => extractText(item));
+            } else if (typeof value === 'object') {
+              extractText(value);
+            }
+          });
+        }
+      };
+      
+      extractText(result);
+      
+      const cleanedText = text.trim();
+      console.log(`✅ DOCX text extracted: ${cleanedText.length} characters`);
+      
+      if (cleanedText.length < 50) {
+        console.log('⚠️ DOCX yielded minimal text. File may be image-heavy or corrupted.');
+      }
+      
+      return cleanedText;
     } catch (error) {
       console.error('❌ DOCX processing error:', error);
-      throw new Error(`DOCX text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.log('💡 DOCX file may be corrupted or password-protected.');
+      return ''; // Return empty instead of throwing
     }
   },
 
@@ -382,31 +438,180 @@ export const visionService = {
    */
   async extractTextFromPDF(buffer: Buffer): Promise<string> {
     try {
-      console.log('📄 Processing PDF with pdf-parse...');
+      console.log('📄 Processing PDF - trying pdf-parse first...');
+      
+      // STRATEGY: Try pdf-parse first for digital text PDFs (fast & accurate)
+      // If it returns minimal text, likely scanned/image-based → use Vision API
       
       const pdfData = await pdfParse(buffer);
-      const text = pdfData.text;
+      const extractedText = pdfData.text;
       
-      console.log(`✅ PDF text extracted: ${text.length} characters`);
+      console.log(`📊 pdf-parse extracted: ${extractedText.length} characters from ${pdfData.numpages} pages`);
       
-      // If pdf-parse didn't extract much text, fallback to Vision API
-      if (text.length < 50) {
-        console.log('⚠️ PDF text extraction yielded minimal text, trying Vision API...');
-        return await this.extractTextWithVisionAPI(buffer, 'document.pdf');
+      // Check if we got meaningful text
+      // Low threshold: < 100 chars or < 10 chars per page suggests scanned/image PDF
+      const charsPerPage = extractedText.length / (pdfData.numpages || 1);
+      
+      if (extractedText.length < 100 || charsPerPage < 10) {
+        console.log(`⚠️ Minimal text extracted (${charsPerPage.toFixed(1)} chars/page). Likely scanned PDF.`);
+        console.log('🔄 Converting PDF pages to images for Vision API OCR...');
+        
+        // For scanned PDFs, we need to convert to images first
+        // Vision API's documentTextDetection doesn't work well with PDF bytes directly
+        return await this.extractTextFromPDFViaImages(buffer, pdfData.numpages);
       }
       
-      return text;
+      console.log(`✅ PDF text extraction successful (digital text PDF)`);
+      return extractedText;
+      
     } catch (error) {
       console.error('❌ PDF processing error:', error);
       
-      // Fallback to Vision API if pdf-parse fails
+      // If pdf-parse completely fails, try Vision API approach
       try {
-        console.log('🔄 Fallback to Vision API for PDF...');
-        return await this.extractTextWithVisionAPI(buffer, 'document.pdf');
+        console.log('🔄 Fallback: Converting PDF to images for Vision API...');
+        // Attempt Vision API extraction without page count
+        return await this.extractTextFromPDFViaImages(buffer, 1);
       } catch (visionError) {
-        console.error('❌ PDF Vision API fallback failed:', visionError);
-        throw new Error(`PDF text extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error('❌ Vision API fallback also failed:', visionError);
+        throw new Error(`PDF text extraction failed completely: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
+    }
+  },
+
+  /**
+   * Extract text from PDF by converting pages to images and using Vision API OCR
+   * This handles scanned PDFs and image-based PDFs
+   */
+  async extractTextFromPDFViaImages(buffer: Buffer, numPages: number): Promise<string> {
+    try {
+      console.log(`🚀 Attempting OCR extraction for scanned PDF (${numPages} pages)...`);
+      
+      // Check if we have GCS configured
+      const bucketName = process.env.GOOGLE_CLOUD_BUCKET;
+      
+      if (!bucketName) {
+        console.log('⚠️ GOOGLE_CLOUD_BUCKET not configured, using simple Vision API fallback');
+        return await this.extractScannedPDFSimple(buffer);
+      }
+      
+      // Use full GCS + Vision API async approach
+      const fileName = `temp-pdf-${Date.now()}.pdf`;
+      const outputPrefix = `ocr-output-${Date.now()}`;
+      
+      try {
+        const bucket = storage.bucket(bucketName);
+        
+        // Upload PDF to GCS
+        console.log(`⬆️ Uploading PDF to gs://${bucketName}/${fileName}`);
+        const file = bucket.file(fileName);
+        await file.save(buffer, {
+          contentType: 'application/pdf',
+        });
+        
+        // Use Vision API async batch annotation for PDF
+        console.log('🔍 Running Vision API async PDF OCR...');
+        const inputConfig = {
+          gcsSource: {
+            uri: `gs://${bucketName}/${fileName}`,
+          },
+          mimeType: 'application/pdf',
+        };
+        
+        const outputConfig = {
+          gcsDestination: {
+            uri: `gs://${bucketName}/${outputPrefix}/`,
+          },
+          batchSize: 2,
+        };
+        
+        const features = [{type: 'DOCUMENT_TEXT_DETECTION'}];
+        const request = {
+          requests: [{
+            inputConfig,
+            features,
+            outputConfig,
+          }],
+        };
+        
+        const [operation] = await visionClient.asyncBatchAnnotateFiles(request);
+        console.log('⏳ Waiting for async operation...');
+        const [result] = await operation.promise();
+        
+        // Read OCR results
+        console.log('📥 Reading OCR results...');
+        const [files] = await bucket.getFiles({ prefix: outputPrefix });
+        
+        let extractedText = '';
+        for (const outputFile of files) {
+          if (outputFile.name.endsWith('.json')) {
+            const [contents] = await outputFile.download();
+            const jsonResponse = JSON.parse(contents.toString());
+            
+            if (jsonResponse.responses) {
+              for (const response of jsonResponse.responses) {
+                if (response.fullTextAnnotation) {
+                  extractedText += response.fullTextAnnotation.text + '\n\n';
+                }
+              }
+            }
+          }
+        }
+        
+        // Cleanup
+        await file.delete().catch(() => {});
+        for (const outputFile of files) {
+          await outputFile.delete().catch(() => {});
+        }
+        
+        console.log(`✅ Async PDF OCR complete: ${extractedText.length} characters`);
+        return extractedText.trim();
+        
+      } catch (gcsError: any) {
+        console.error('❌ GCS async OCR failed:', gcsError.message);
+        console.log('🔄 Falling back to simple Vision API...');
+        return await this.extractScannedPDFSimple(buffer);
+      }
+      
+    } catch (error) {
+      console.error('❌ PDF OCR error:', error);
+      return '';
+    }
+  },
+
+  /**
+   * Simple fallback for scanned PDFs without GCS (first page only)
+   */
+  async extractScannedPDFSimple(buffer: Buffer): Promise<string> {
+    try {
+      console.log('📄 Attempting Vision API on PDF bytes directly (may only get first page)...');
+      
+      // Vision API can sometimes handle PDF bytes directly, but often only first page
+      const [result] = await visionClient.documentTextDetection({
+        image: {
+          content: buffer.toString('base64'),
+        },
+      });
+      
+      const text = result.fullTextAnnotation?.text || '';
+      
+      if (text.length > 0) {
+        console.log(`✅ Extracted ${text.length} characters (likely first page only)`);
+        console.log('💡 For complete multi-page OCR, set GOOGLE_CLOUD_BUCKET in environment');
+        return text;
+      }
+      
+      console.log('⚠️ No text extracted from scanned PDF');
+      console.log('💡 Solutions:');
+      console.log('   1. Export PDF as "text-based" instead of images');
+      console.log('   2. Convert PDF pages to JPG/PNG and upload separately');
+      console.log('   3. Configure GOOGLE_CLOUD_BUCKET for multi-page OCR');
+      
+      return '';
+      
+    } catch (error) {
+      console.error('❌ Simple Vision API also failed:', error);
+      return '';
     }
   }
 };

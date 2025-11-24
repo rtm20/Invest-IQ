@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface InvestmentMemoViewerProps {
     memo: any;
@@ -11,19 +11,46 @@ interface InvestmentMemoViewerProps {
 export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMemoViewerProps) {
     const [activeSection, setActiveSection] = useState('executive');
 
-    const sections = [
-        { id: 'executive', label: 'Executive Summary', icon: '📊' },
-        { id: 'highlights', label: 'Investment Highlights', icon: '⭐' },
-        { id: 'company', label: 'Company Overview', icon: '🏢' },
-        { id: 'market', label: 'Market Analysis', icon: '📈' },
-        { id: 'business', label: 'Business Model', icon: '💼' },
-        { id: 'team', label: 'Team Assessment', icon: '👥' },
-        { id: 'traction', label: 'Traction Metrics', icon: '🚀' },
-        { id: 'financial', label: 'Financial Analysis', icon: '💰' },
-        { id: 'risks', label: 'Risk Assessment', icon: '⚠️' },
-        { id: 'thesis', label: 'Investment Thesis', icon: '💡' },
-        { id: 'terms', label: 'Deal Terms', icon: '📝' },
-        { id: 'recommendation', label: 'Recommendation', icon: '✅' }
+    // Grouped sections for better organization
+    const sectionGroups = [
+        {
+            title: 'Overview',
+            sections: [
+                { id: 'executive', label: 'Executive Summary', icon: '📊' },
+                { id: 'highlights', label: 'Key Highlights', icon: '⭐' },
+                { id: 'recommendation', label: 'Recommendation', icon: '✅' }
+            ]
+        },
+        {
+            title: 'Company Analysis',
+            sections: [
+                { id: 'company', label: 'Company', icon: '🏢' },
+                { id: 'team', label: 'Team', icon: '👥' },
+                { id: 'product', label: 'Business & Product', icon: '💼', 
+                  content: ['business', 'company'] } // Combined business model with company
+            ]
+        },
+        {
+            title: 'Market & Traction',
+            sections: [
+                { id: 'market', label: 'Market', icon: '📈' },
+                { id: 'traction', label: 'Traction', icon: '🚀' }
+            ]
+        },
+        {
+            title: 'Financials & Risk',
+            sections: [
+                { id: 'financial', label: 'Financials', icon: '💰' },
+                { id: 'risks', label: 'Risks', icon: '⚠️' }
+            ]
+        },
+        {
+            title: 'Investment Details',
+            sections: [
+                { id: 'thesis', label: 'Thesis', icon: '💡' },
+                { id: 'terms', label: 'Deal Terms', icon: '📝' }
+            ]
+        }
     ];
 
     const getRecommendationColor = (decision: string) => {
@@ -31,37 +58,47 @@ export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMe
             case 'Strong Invest': return 'bg-green-600 text-white';
             case 'Invest': return 'bg-green-500 text-white';
             case 'Maybe': return 'bg-yellow-500 text-white';
-            case 'Pass': return 'bg-red-500 text-white';
-            case 'Strong Pass': return 'bg-red-600 text-white';
+            case 'Reject': case 'Pass': return 'bg-red-500 text-white';
+            case 'Strong Reject': case 'Strong Pass': return 'bg-red-600 text-white';
             default: return 'bg-gray-500 text-white';
         }
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            {/* Section Navigation Only - No download button */}
-            <div className="bg-gradient-to-r from-gray-50 to-indigo-50 border-b border-indigo-100 px-6 py-4">
-                <h3 className="text-sm font-medium text-gray-600 mb-3">Select Section:</h3>
-                <div className="flex space-x-2 overflow-x-auto">
-                    {sections.map((section) => (
-                        <button
-                            key={section.id}
-                            onClick={() => setActiveSection(section.id)}
-                            className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === section.id
-                                    ? 'bg-indigo-600 text-white shadow-lg'
-                                    : 'bg-white text-gray-700 hover:bg-indigo-50 border border-gray-200'
-                                }`}
-                        >
-                            <span className="mr-2">{section.icon}</span>
-                            {section.label}
-                        </button>
-                    ))}
-                </div>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex">
+            {/* Vertical Sidebar Navigation */}
+            <div className="w-64 bg-gradient-to-b from-indigo-50 to-purple-50 border-r border-indigo-100 p-4 overflow-y-auto max-h-[700px]">
+                <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wide mb-4 px-2">
+                    Investment Memo
+                </h3>
+                
+                {sectionGroups.map((group, groupIdx) => (
+                    <div key={groupIdx} className="mb-5">
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
+                            {group.title}
+                        </div>
+                        <div className="space-y-1">
+                            {group.sections.map((section) => (
+                                <button
+                                    key={section.id}
+                                    onClick={() => setActiveSection(section.id)}
+                                    className={`w-full text-left px-3 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center ${
+                                        activeSection === section.id
+                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            : 'text-gray-700 hover:bg-white hover:shadow-sm'
+                                    }`}
+                                >
+                                    <span className="mr-2.5 text-base">{section.icon}</span>
+                                    <span className="truncate">{section.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            {/* Content */}
-            <div className="p-8 max-h-[600px] overflow-y-auto">
-                {/* Executive Summary */}
+            {/* Content Area */}
+            <div className="flex-1 p-8 overflow-y-auto max-h-[700px]">{/* Executive Summary */}
                 {activeSection === 'executive' && (
                     <div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-6">Executive Summary</h3>
@@ -161,6 +198,45 @@ export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMe
                                 <p className="text-gray-800 leading-relaxed">{(value as string).replace(/\*\*/g, '')}</p>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Combined Business & Product Section */}
+                {activeSection === 'product' && (
+                    <div className="space-y-5">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-6">Business Model & Product</h3>
+
+                        <div className="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-r-xl mb-5">
+                            <h4 className="font-bold text-blue-900 mb-3 text-lg">Business Model</h4>
+                            <div className="space-y-3">
+                                {Object.entries(memo.businessModel).map(([key, value]) => (
+                                    <div key={key}>
+                                        <p className="font-semibold text-blue-800 text-sm capitalize mb-1">
+                                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                                        </p>
+                                        <p className="text-gray-700 leading-relaxed">{(value as string).replace(/\*\*/g, '')}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-purple-50 border-l-4 border-purple-600 p-5 rounded-r-xl">
+                            <h4 className="font-bold text-purple-900 mb-3 text-lg">Company Overview</h4>
+                            <div className="space-y-3">
+                                {memo.companyOverview.mission && (
+                                    <div>
+                                        <p className="font-semibold text-purple-800 text-sm mb-1">Mission</p>
+                                        <p className="text-gray-700 leading-relaxed">{memo.companyOverview.mission.replace(/\*\*/g, '')}</p>
+                                    </div>
+                                )}
+                                {memo.companyOverview.valueProposition && (
+                                    <div>
+                                        <p className="font-semibold text-purple-800 text-sm mb-1">Value Proposition</p>
+                                        <p className="text-gray-700 leading-relaxed">{memo.companyOverview.valueProposition.replace(/\*\*/g, '')}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -297,9 +373,18 @@ export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMe
                         <h3 className="text-2xl font-bold text-gray-900 mb-6">Final Recommendation</h3>
 
                         <div className={`${getRecommendationColor(memo.recommendation.decision)} p-10 rounded-2xl shadow-2xl text-center transform hover:scale-105 transition-transform`}>
-                            <CheckCircle className="h-20 w-20 mx-auto mb-4 animate-pulse" />
-                            <div className="text-5xl font-bold mb-3">{memo.recommendation.decision}</div>
-                            <div className="text-xl opacity-95">Investment Committee Recommendation</div>
+                            {(() => {
+                                const decision = memo.recommendation.decision === 'Pass' ? 'Reject' : memo.recommendation.decision;
+                                if (decision === 'Reject' || decision === 'Strong Reject') {
+                                    return <XCircle className="h-20 w-20 mx-auto mb-4 animate-pulse" />;
+                                } else if (decision === 'Maybe') {
+                                    return <AlertCircle className="h-20 w-20 mx-auto mb-4 animate-pulse" />;
+                                } else {
+                                    return <CheckCircle className="h-20 w-20 mx-auto mb-4 animate-pulse" />;
+                                }
+                            })()}
+                            <div className="text-5xl font-bold mb-3">{memo.recommendation.decision === 'Pass' ? 'Reject' : memo.recommendation.decision}</div>
+                            <div className="text-xl opacity-95">AI Investment Recommendation</div>
                         </div>
 
                         <div className="bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 border border-gray-300 p-6 rounded-xl shadow-sm">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -15,6 +15,7 @@ import {
   LineChart,
   FileText
 } from 'lucide-react';
+import { LineChart as RechartsLine, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend as RechartsLegend, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, BarChart, Bar } from 'recharts';
 import ScoreTransparency from './ScoreTransparency';
 import MarketIntelligence from './MarketIntelligence';
 import SectorBenchmark from './SectorBenchmark';
@@ -36,6 +37,7 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
   
   const analysis = analysisData?.analysis || {};
   const consolidatedData = analysisData?.consolidatedData || {};
+  const sectorClassification = analysisData?.sectorClassification || null;
   const processingMetadata = analysisData?.processingMetadata || {};
 
   const getScoreColor = (score: number) => {
@@ -48,7 +50,7 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
     switch (recommendation?.toLowerCase()) {
       case 'invest': case 'buy': return 'text-green-600 bg-green-50 border-green-200';
       case 'maybe': case 'hold': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'pass': case 'sell': return 'text-red-600 bg-red-50 border-red-200';
+      case 'reject': case 'pass': case 'sell': return 'text-red-600 bg-red-50 border-red-200';
       default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
@@ -75,6 +77,78 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
     return { percentage, basePoints };
   };
 
+  // Category Scores Bar Chart Data - 100% REAL from AI
+  const categoryScoresData = useMemo(() => {
+    return [
+      { category: 'Team', score: scores.founder, maxScore: 20, color: '#8b5cf6' },
+      { category: 'Market', score: scores.market, maxScore: 20, color: '#3b82f6' },
+      { category: 'Product', score: scores.product, maxScore: 20, color: '#10b981' },
+      { category: 'Traction', score: scores.traction, maxScore: 20, color: '#f59e0b' },
+      { category: 'Financial', score: scores.financial, maxScore: 15, color: '#ec4899' },
+      { category: 'Competitive', score: scores.competitive, maxScore: 5, color: '#6366f1' }
+    ].filter(item => item.score > 0); // Only show categories with scores
+  }, [scores]);
+
+  // Sub-Factor Breakdown Data - 100% REAL from AI
+  const subFactorData = useMemo(() => {
+    const factors: any[] = [];
+    
+    // Extract all sub-factors from each category breakdown
+    if (analysis?.founderAnalysis?.breakdown) {
+      Object.entries(analysis.founderAnalysis.breakdown).forEach(([key, value]: [string, any]) => {
+        if (value.points !== undefined && value.maxPoints !== undefined) {
+          factors.push({
+            name: key.replace(/([A-Z])/g, ' $1').trim(),
+            points: value.points,
+            maxPoints: value.maxPoints,
+            category: 'Team'
+          });
+        }
+      });
+    }
+    
+    if (analysis?.marketAnalysis?.breakdown) {
+      Object.entries(analysis.marketAnalysis.breakdown).forEach(([key, value]: [string, any]) => {
+        if (value.points !== undefined && value.maxPoints !== undefined) {
+          factors.push({
+            name: key.replace(/([A-Z])/g, ' $1').trim(),
+            points: value.points,
+            maxPoints: value.maxPoints,
+            category: 'Market'
+          });
+        }
+      });
+    }
+    
+    if (analysis?.productAnalysis?.breakdown) {
+      Object.entries(analysis.productAnalysis.breakdown).forEach(([key, value]: [string, any]) => {
+        if (value.points !== undefined && value.maxPoints !== undefined) {
+          factors.push({
+            name: key.replace(/([A-Z])/g, ' $1').trim(),
+            points: value.points,
+            maxPoints: value.maxPoints,
+            category: 'Product'
+          });
+        }
+      });
+    }
+    
+    return factors.slice(0, 10); // Top 10 factors for readability
+  }, [analysis]);
+
+  // Risk Factors Data - 100% REAL from AI
+  const riskData = useMemo(() => {
+    const risks = analysis?.riskAnalysis?.factors || [];
+    if (risks.length === 0) return [];
+    
+    const colors = ['#ef4444', '#f97316', '#eab308', '#f59e0b', '#fb923c'];
+    return risks.slice(0, 5).map((risk: string, idx: number) => ({
+      name: risk.substring(0, 35),
+      value: 1, // Equal weight for all identified risks
+      color: colors[idx % colors.length]
+    }));
+  }, [analysis]);
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Header */}
@@ -89,6 +163,39 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
       {viewMode === 'summary' ? (
         /* SUMMARY VIEW */
         <div className="space-y-6">
+          {/* Sector Classification Badge - NEW */}
+          {sectorClassification && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-blue-600 font-semibold mb-1">Sector Classification</div>
+                  <div className="text-lg font-bold text-gray-900">{sectorClassification.sector}</div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    {sectorClassification.industry} • {sectorClassification.stage} • {sectorClassification.businessModel}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-blue-600 uppercase tracking-wide mb-1">Compared to</div>
+                  <div className="text-sm font-medium text-gray-800">
+                    {sectorClassification.sector === 'Enterprise SaaS' && 'Snowflake, Databricks, HashiCorp'}
+                    {sectorClassification.sector === 'B2B SaaS' && 'HubSpot, Slack, Zoom'}
+                    {sectorClassification.sector === 'Consumer FinTech' && 'Stripe, Robinhood, Chime'}
+                    {sectorClassification.sector === 'HealthTech' && 'Oscar Health, Ro, Tempus'}
+                    {sectorClassification.sector === 'Consumer Social' && 'Instagram, Discord, TikTok'}
+                    {sectorClassification.sector === 'AI/ML Infrastructure' && 'Hugging Face, Scale AI, W&B'}
+                    {sectorClassification.sector === 'Hardware/IoT' && 'Peloton, Ring, Nest'}
+                    {sectorClassification.sector === 'Marketplace' && 'Airbnb, DoorDash, Faire'}
+                    {sectorClassification.sector === 'Climate Tech' && 'Rivian, Impossible Foods, Redwood'}
+                    {sectorClassification.sector === 'E-commerce/DTC' && 'Warby Parker, Glossier, Allbirds'}
+                    {sectorClassification.sector === 'EdTech' && 'Coursera, Duolingo, Outschool'}
+                    {sectorClassification.sector === 'Cybersecurity' && 'CrowdStrike, SentinelOne, Lacework'}
+                    {!['Enterprise SaaS', 'B2B SaaS', 'Consumer FinTech', 'HealthTech', 'Consumer Social', 'AI/ML Infrastructure', 'Hardware/IoT', 'Marketplace', 'Climate Tech', 'E-commerce/DTC', 'EdTech', 'Cybersecurity'].includes(sectorClassification.sector) && 'Industry Leaders'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Key Metrics Dashboard - Summary Only */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Investment Decision - Clickable */}
@@ -276,6 +383,141 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
           ))}
         </div>
       </div>
+
+      {/* Interactive Charts Section - 100% Real AI Data */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Category Scores Bar Chart */}
+        {categoryScoresData.length > 0 && (
+          <div className="bg-white border-2 border-blue-200 rounded-xl p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2" />
+              Investment Category Scores
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={categoryScoresData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="category" 
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                />
+                <YAxis 
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  label={{ value: 'Points', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }}
+                />
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: any, name: string, props: any) => {
+                    return [`${value}/${props.payload.maxScore}`, 'Score'];
+                  }}
+                />
+                <Bar 
+                  dataKey="score" 
+                  name="Score"
+                  radius={[8, 8, 0, 0]}
+                >
+                  {categoryScoresData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              AI-analyzed scores across 6 investment dimensions
+            </p>
+          </div>
+        )}
+
+        {/* Sub-Factor Breakdown Chart */}
+        {subFactorData.length > 0 && (
+          <div className="bg-white border-2 border-green-200 rounded-xl p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
+              <Target className="h-5 w-5 mr-2" />
+              Top Performance Factors
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={subFactorData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 10 }} />
+                <YAxis 
+                  type="category" 
+                  dataKey="name" 
+                  width={120}
+                  tick={{ fill: '#374151', fontSize: 10 }}
+                />
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: any, name: string, props: any) => {
+                    return [`${value}/${props.payload.maxPoints}`, `${props.payload.category}`];
+                  }}
+                />
+                <Bar 
+                  dataKey="points" 
+                  fill="#10b981"
+                  radius={[0, 8, 8, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              Detailed breakdown of key evaluation factors
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Risk Factors Visualization - Only if risks exist */}
+      {riskData.length > 0 && (
+        <div className="bg-white border-2 border-orange-200 rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-orange-900 mb-4 flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Identified Risk Factors
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ResponsiveContainer width="100%" height={250}>
+              <RechartsPie>
+                <Pie
+                  data={riskData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={90}
+                  fill="#8884d8"
+                  paddingAngle={3}
+                  dataKey="value"
+                  label={({ name }) => name}
+                  labelLine={{ stroke: '#6b7280', strokeWidth: 1 }}
+                >
+                  {riskData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip />
+              </RechartsPie>
+            </ResponsiveContainer>
+            <div className="flex flex-col justify-center space-y-3">
+              {riskData.map((risk, idx) => (
+                <div key={idx} className="flex items-start">
+                  <div 
+                    className="w-4 h-4 rounded-full mr-3 mt-0.5 flex-shrink-0" 
+                    style={{ backgroundColor: risk.color }}
+                  />
+                  <span className="text-sm text-gray-700">{risk.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 text-center mt-3">
+            AI-identified risk factors from comprehensive analysis
+          </p>
+        </div>
+      )}
 
       {/* Investment Highlights */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

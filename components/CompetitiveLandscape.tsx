@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Target, TrendingUp, AlertTriangle, DollarSign, Users, Award, ChevronDown, ChevronUp } from 'lucide-react';
 import { CompetitorProfile, CompetitiveAnalysis } from '@/lib/ai-competitive-intelligence';
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
 
 // Local interface for component props (extends the API interface if needed)
 interface CompetitorProfileDisplay extends CompetitorProfile {
@@ -17,6 +18,37 @@ interface CompetitiveLandscapeProps {
 export default function CompetitiveLandscape({ landscape, companyName }: CompetitiveLandscapeProps) {
     const [expandedCompetitor, setExpandedCompetitor] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'direct' | 'indirect' | 'insights'>('direct');
+
+    // Prepare competitive positioning data - 100% REAL from AI
+    const competitorPositionData = useMemo(() => {
+        if (!landscape.primaryCompetitors || landscape.primaryCompetitors.length === 0) return [];
+        
+        return landscape.primaryCompetitors.slice(0, 5).map(comp => {
+            let positionScore = 0;
+            const position = comp.marketPosition?.toLowerCase();
+            
+            // Map actual AI-determined positions to scores
+            if (position === 'leader') positionScore = 100;
+            else if (position === 'challenger') positionScore = 75;
+            else if (position === 'niche') positionScore = 50;
+            else if (position === 'emerging') positionScore = 35;
+            
+            // Map threat level to numeric value
+            let threatScore = 0;
+            const threat = comp.threatLevel?.toLowerCase();
+            if (threat === 'high') threatScore = 85;
+            else if (threat === 'medium') threatScore = 60;
+            else if (threat === 'low') threatScore = 35;
+            
+            return {
+                name: comp.name.substring(0, 25),
+                marketPosition: positionScore,
+                threatLevel: threatScore,
+                position: comp.marketPosition,
+                threat: comp.threatLevel
+            };
+        });
+    }, [landscape]);
 
     const getThreatColor = (level: string) => {
         const normalized = level?.toLowerCase();
@@ -211,6 +243,66 @@ export default function CompetitiveLandscape({ landscape, companyName }: Competi
                 {/* Market Positioning */}
                 {activeTab === 'indirect' && (
                     <div className="space-y-6">
+                {/* Competitive Positioning Bar Chart - 100% Real AI Data */}
+                        {competitorPositionData.length > 0 && (
+                            <div className="bg-white border-2 border-purple-200 rounded-xl p-6">
+                                <h4 className="text-lg font-bold text-purple-900 mb-4 flex items-center">
+                                    <span className="mr-2">📊</span>
+                                    Competitive Positioning Analysis
+                                </h4>
+                                <ResponsiveContainer width="100%" height={350}>
+                                    <BarChart data={competitorPositionData} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                        <XAxis type="number" domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 11 }} />
+                                        <YAxis 
+                                            type="category" 
+                                            dataKey="name" 
+                                            width={120}
+                                            tick={{ fill: '#374151', fontSize: 11 }}
+                                        />
+                                        <Tooltip 
+                                            contentStyle={{ 
+                                                backgroundColor: '#fff', 
+                                                border: '1px solid #e5e7eb',
+                                                borderRadius: '8px'
+                                            }}
+                                            formatter={(value: any, name: string) => {
+                                                if (name === 'marketPosition') return [value, 'Market Position Score'];
+                                                if (name === 'threatLevel') return [value, 'Threat Level Score'];
+                                                return [value, name];
+                                            }}
+                                        />
+                                        <Legend />
+                                        <Bar 
+                                            dataKey="marketPosition" 
+                                            name="Market Position" 
+                                            fill="#8b5cf6"
+                                            radius={[0, 8, 8, 0]}
+                                        />
+                                        <Bar 
+                                            dataKey="threatLevel" 
+                                            name="Competitive Threat" 
+                                            fill="#f59e0b"
+                                            radius={[0, 8, 8, 0]}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                                <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
+                                    <div>
+                                        <p className="font-semibold text-purple-900 mb-1">Market Position:</p>
+                                        <p className="text-gray-600">Leader (100) > Challenger (75) > Niche (50) > Emerging (35)</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-orange-900 mb-1">Threat Level:</p>
+                                        <p className="text-gray-600">High (85) > Medium (60) > Low (35)</p>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 text-center mt-3">
+                                    Based on AI analysis of competitor positions and threat assessment
+                                </p>
+                            </div>
+                        )}
+
                         {landscape.marketPositioning && (
                             <>
                                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">

@@ -64,7 +64,7 @@ interface InvestmentMemo {
         liquidationPreference: string;
     };
     recommendation: {
-        decision: 'Strong Pass' | 'Pass' | 'Maybe' | 'Invest' | 'Strong Invest';
+        decision: 'Strong Reject' | 'Reject' | 'Maybe' | 'Invest' | 'Strong Invest';
         reasoning: string;
         nextSteps: string[];
         timeline: string;
@@ -406,7 +406,7 @@ RETURN ONLY THE JSON OBJECT, NO ADDITIONAL TEXT OR EXPLANATIONS.`;
      */
     private async generateRecommendation(analysisData: any, companyName: string): Promise<any> {
         const score = analysisData?.analysis?.recommendation?.score || 75;
-        const decision = score >= 85 ? 'Strong Invest' : score >= 70 ? 'Invest' : score >= 55 ? 'Maybe' : 'Pass';
+        const decision = score >= 85 ? 'Strong Invest' : score >= 70 ? 'Invest' : score >= 55 ? 'Maybe' : 'Reject';
 
         const prompt = `You are a VC partner making a final investment recommendation.
 
