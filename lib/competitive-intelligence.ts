@@ -73,16 +73,29 @@ export class CompetitiveIntelligenceEngine {
   private model: any;
 
   constructor() {
+    console.log('🔑 Initializing Competitive Intelligence with credentials...');
     const credentials = getGoogleCloudCredentials();
+    
+    if (!credentials) {
+      console.error('❌ No Google Cloud credentials found!');
+      console.log('Available env vars:', {
+        hasClientEmail: !!process.env.GOOGLE_CLIENT_EMAIL,
+        hasPrivateKey: !!process.env.GOOGLE_PRIVATE_KEY,
+        hasProjectId: !!process.env.GOOGLE_PROJECT_ID
+      });
+      throw new Error('Google Cloud credentials not configured. Please check environment variables.');
+    }
+    
+    console.log('✅ Credentials found, initializing VertexAI...');
     
     this.vertexAI = new VertexAI({
       project: projectId,
       location: location,
-      googleAuthOptions: credentials ? {
+      googleAuthOptions: {
         scopes: ['https://www.googleapis.com/auth/cloud-platform'],
         credentials: credentials,
         projectId: projectId
-      } : undefined
+      }
     });
 
     this.model = this.vertexAI.getGenerativeModel({

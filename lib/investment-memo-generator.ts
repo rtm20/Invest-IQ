@@ -1,36 +1,7 @@
 // AI Investment Memo Generator
 // Generates professional VC-style investment memos using Google Gemini
 
-import { VertexAI } from '@google-cloud/vertexai';
-
-const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_PROJECT_ID || 'ai-startup-analyst-hackathon';
-const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-
-// Helper function to get Google Cloud credentials (same as in google-cloud.ts)
-function getGoogleCloudCredentials() {
-  // Check for individual environment variables
-  if (process.env.GOOGLE_CLIENT_EMAIL && 
-      process.env.GOOGLE_PRIVATE_KEY && 
-      process.env.GOOGLE_PROJECT_ID) {
-    
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
-    
-    return {
-      type: process.env.GOOGLE_TYPE || 'service_account',
-      project_id: process.env.GOOGLE_PROJECT_ID,
-      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-      private_key: privateKey,
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      auth_uri: process.env.GOOGLE_AUTH_URI || 'https://accounts.google.com/o/oauth2/auth',
-      token_uri: process.env.GOOGLE_TOKEN_URI || 'https://oauth2.googleapis.com/token',
-      auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL || 'https://www.googleapis.com/oauth2/v1/certs',
-      client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL
-    };
-  }
-  
-  return undefined;
-}
+import { geminiService } from './google-cloud';
 
 interface InvestmentMemo {
     executiveSummary: string;
@@ -103,32 +74,6 @@ interface InvestmentMemo {
 }
 
 export class InvestmentMemoGenerator {
-    private vertexAI: VertexAI;
-    private model: any;
-
-    constructor() {
-        const credentials = getGoogleCloudCredentials();
-        
-        this.vertexAI = new VertexAI({
-            project: projectId,
-            location: location,
-            googleAuthOptions: credentials ? {
-                scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-                credentials: credentials,
-                projectId: projectId
-            } : undefined
-        });
-
-        this.model = this.vertexAI.getGenerativeModel({
-            model: 'gemini-2.0-flash',
-            generationConfig: {
-                maxOutputTokens: 8192,
-                temperature: 0.5,
-                topP: 0.9,
-            },
-        });
-    }
-
     /**
      * Generate a comprehensive investment memo
      */
@@ -232,15 +177,14 @@ Example: ["300% YoY revenue growth with strong unit economics", "Experienced fou
 RETURN ONLY THE JSON ARRAY, NO ADDITIONAL TEXT.`;
 
         try {
-            const result = await this.model.generateContent(prompt);
-            const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+            const responseText = await geminiService.callGeminiRaw(prompt, 2000, 0.5);
             
             // Robust JSON extraction: find array boundaries
-            const firstBracket = response.indexOf('[');
-            const lastBracket = response.lastIndexOf(']');
+            const firstBracket = responseText.indexOf('[');
+            const lastBracket = responseText.lastIndexOf(']');
             
             if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-                const jsonStr = response.substring(firstBracket, lastBracket + 1);
+                const jsonStr = responseText.substring(firstBracket, lastBracket + 1);
                 try {
                     const highlights = JSON.parse(jsonStr);
                     console.log('✅ Generated investment highlights');
@@ -465,8 +409,7 @@ RETURN ONLY THE JSON OBJECT, NO ADDITIONAL TEXT OR EXPLANATIONS.`;
      */
     private async generateSection(prompt: string): Promise<string> {
         try {
-            const result = await this.model.generateContent(prompt);
-            const responseText = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
+            const responseText = await geminiService.callGeminiRaw(prompt, 4000, 0.5);
             
             if (!responseText) {
                 throw new Error('Empty response from AI');
@@ -484,8 +427,7 @@ RETURN ONLY THE JSON OBJECT, NO ADDITIONAL TEXT OR EXPLANATIONS.`;
      */
     private async generateJSONSection(prompt: string): Promise<any> {
         try {
-            const result = await this.model.generateContent(prompt);
-            const response = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
+            const response = await geminiService.callGeminiRaw(prompt, 3000, 0.5);
             
             if (!response) {
                 throw new Error('Empty response from AI');
