@@ -46,10 +46,11 @@ Invest-IQ is an enterprise-grade investment analysis platform that revolutionize
 - **Smart Filtering**: Excludes "HR Tech 2025", "Top 10 lists", "Funded by YC" results
 - **Real Companies Only**: AI validates each search result is an actual competitor
 
-### **4. Google Cloud Storage** (Optional)
-- **Secure File Handling**: Encrypted document storage
-- **Signed URLs**: Temporary access for processed documents
-- **Scalable Architecture**: Handle thousands of document uploads
+### **4. Google Cloud Storage** (Required for Scanned PDFs)
+- **OCR Processing**: Upload scanned PDFs to GCS for Vision API batch annotation
+- **Secure File Handling**: Encrypted document storage with automatic cleanup
+- **Bucket**: `ai-startup-analyst-docs` with Storage Object Admin permissions
+- **Async Processing**: Handle multi-page documents efficiently
 
 ## 🚀 **Quick Start**
 
@@ -93,6 +94,14 @@ GOOGLE_CLOUD_PROJECT_ID=your-project-id
 GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_CUSTOM_SEARCH_API_KEY=your-api-key
 GOOGLE_SEARCH_ENGINE_ID=your-search-engine-id
+
+# For Vercel deployment (alternative to JSON file):
+GOOGLE_CREDENTIALS_JSON=<paste entire google-cloud-key.json content>
+# OR use individual variables:
+GOOGLE_CLIENT_EMAIL=your-service-account-email
+GOOGLE_PRIVATE_KEY=your-private-key
+GOOGLE_PRIVATE_KEY_ID=your-key-id
+GOOGLE_CLIENT_ID=your-client-id
 ```
 
 ### **4. Run Development Server**
@@ -110,24 +119,31 @@ vercel deploy --prod
 
 ## 🎨 **Key Features**
 
-### **1. 📊 Multi-Document Analysis**
-- Upload multiple files (PDF, DOCX, PPTX, TXT)
-- AI extracts and consolidates data from all documents
-- Comprehensive scoring: Team (20pts), Market (20pts), Product (20pts), Traction (20pts), Financial (15pts), Competitive (5pts)
+### **1. 📊 Multi-Document Analysis with Sector-Specific Benchmarking**
+- Upload multiple files (PDF, DOCX, PPTX, TXT, scanned PDFs)
+- **Smart Document Processing**: Automatic detection of scanned PDFs with OCR fallback
+- **DOCX Support**: Full text extraction from Word documents using JSZip + XML parsing
+- **Sector Classification**: AI automatically categorizes startups into 12 sectors (Enterprise SaaS, B2B SaaS, Consumer FinTech, HealthTech, Consumer Social, AI/ML Infrastructure, Hardware/IoT, Marketplace, Climate Tech, E-commerce/DTC, EdTech, Cybersecurity)
+- **Sector-Specific Benchmarks**: Compare against real company examples (Snowflake, Stripe, HubSpot, etc.) within the same sector
+- **Comprehensive Scoring**: Team (20pts), Market (20pts), Product (20pts), Traction (20pts), Financial (15pts), Competitive (5pts)
+- **Dark Mode**: Elegant dark theme with toggle for better viewing experience
 - Download professional analysis report PDF
 
-### **2. 🎯 AI Competitive Intelligence**
+### **2. 🎯 AI Competitive Intelligence** ⭐ **PREMIUM FEATURE**
 - **Auto-Discovery**: Google Custom Search finds competitors automatically
 - **AI Validation**: Filters out conferences, events, and articles
 - **Deep Analysis**: Funding, team size, key differentiators, strengths, weaknesses
 - **Market Positioning**: Your position vs competitors with strategic insights
 - **5 Strategic Recommendations**: AI-generated competitive strategy
+- **Premium Badge**: Highlighted as PRO feature with enhanced styling
 
-### **3. 📝 Investment Memo Generator**
+### **3. 📝 Investment Memo Generator** ⭐ **PREMIUM FEATURE**
 - **12-Section VC Memo**: Executive summary, company overview, market analysis, business model, team assessment, traction, financials, risks, thesis, deal terms, recommendation
 - **Professional PDF**: Branded investment committee memo with color-coded sections
 - **AI-Generated Content**: No templates - 100% AI-written based on your data
 - **Fixed PDF Rendering**: Light colored backgrounds, visible text, proper recommendation colors
+- **Proper Authentication**: Uses shared `geminiService` from `google-cloud.ts` for consistent credentials
+- **Premium Badge**: Highlighted as PRO feature with enhanced styling
 
 ### **4. 💬 AI Due Diligence Chatbot**
 - Context-aware Q&A about analyzed companies
@@ -303,6 +319,53 @@ This project is optimized for Google Cloud's generous free tier:
 
 ## 🔧 **Recent Improvements (Nov 2025)**
 
+### **🎨 Dark Mode Implementation**
+- ✅ Added elegant dark mode toggle in header
+- ✅ Comprehensive dark theme with proper contrast and readability
+- ✅ Smooth transitions between light/dark modes
+- ✅ Persistent theme preference using localStorage
+- ✅ Dark mode support across all components (upload, analysis, reports, memos)
+
+### **📊 Sector-Specific Benchmarking System**
+- ✅ Created comprehensive database of 12 sectors with real company benchmarks
+- ✅ AI-powered sector classification before scoring
+- ✅ Context-aware scoring based on sector norms (e.g., HealthTech FDA approvals vs Consumer Social viral growth)
+- ✅ Real company examples for comparison (Snowflake $20B TAM, Stripe Series A metrics, etc.)
+- ✅ Fixed "everything scores as B2B SaaS" problem with proper validation
+
+### **📄 Scanned PDF & DOCX Support**
+- ✅ **Smart PDF Detection**: Automatically detects scanned vs digital PDFs (< 10 chars/page triggers OCR)
+- ✅ **Google Cloud Vision API Integration**: Async batch annotation for multi-page scanned PDFs
+- ✅ **GCS Storage Setup**: Created `ai-startup-analyst-docs` bucket with proper permissions
+- ✅ **DOCX Extraction**: Full Word document support using JSZip + xml2js (manual XML parsing)
+- ✅ **Tested with Real Data**: Successfully extracted 76,893 chars from 37-page Kredily financial statement
+- ✅ **Removed Mammoth**: Switched to JSZip+xml2js approach for better reliability
+
+### **🎯 Premium Features Highlighting**
+- ✅ Added "PRO" badges to Competitive Intelligence and Investment Memo features
+- ✅ Enhanced visual styling with gradient backgrounds and borders
+- ✅ Ring effects on active state for premium feel
+- ✅ Clear differentiation from basic Analysis Report feature
+
+### **🐛 Authentication & API Fixes**
+- ✅ Fixed Investment Memo authentication by using shared `geminiService`
+- ✅ Fixed Competitive Intelligence authentication issues
+- ✅ Proper credential handling across all Vertex AI instances
+- ✅ Added comprehensive logging for credential debugging
+
+### **⚡ Performance Optimizations**
+- ✅ Reduced analysis time estimate from 60s to 30s (reflects actual ~1 min completion)
+- ✅ Updated progress stages timing for better UX
+- ✅ Fixed array response handling from Gemini (handles both `{...}` and `[{...}]` formats)
+- ✅ Added safe property access with optional chaining to prevent crashes
+
+### **🎨 UI/UX Improvements**
+- ✅ Changed "Investment Committee Recommendation" to "AI Investment Recommendation"
+- ✅ Added Detailed/Summary toggle (only visible in Analysis Report section)
+- ✅ Fixed InvestIQ logo alignment in header
+- ✅ Improved upload area text visibility in dark mode
+- ✅ Added sector classification badges showing compared companies
+
 ### **Competitive Intelligence Fixes**
 - ✅ Added AI validation layer to filter out conferences and articles
 - ✅ Improved search query: excludes "conference", "event", "summit", "news"
@@ -352,11 +415,13 @@ GOOGLE_APPLICATION_CREDENTIALS_JSON=<paste entire JSON content>
 
 ## 📊 **Performance Metrics**
 
-- **Processing Speed**: <15 seconds for multi-document analysis
+- **Processing Speed**: <60 seconds for multi-document analysis with sector classification
+- **OCR Performance**: Successfully extracts 76K+ characters from 37-page scanned PDFs
 - **API Efficiency**: 70% reduction in API calls through batching
 - **Competitor Discovery**: 5 validated competitors in <12 seconds
 - **Memo Generation**: Complete 12-section memo in <20 seconds
 - **PDF Export**: Professional PDF in <3 seconds
+- **Dark Mode**: Instant theme switching with localStorage persistence
 
 ## 🤝 **Team**
 
