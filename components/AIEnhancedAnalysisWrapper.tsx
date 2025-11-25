@@ -30,10 +30,11 @@ export default function AIEnhancedAnalysisWrapper({
     const [isGeneratingMemo, setIsGeneratingMemo] = useState(false);
     const [activeAIFeature, setActiveAIFeature] = useState<'analysis' | 'competitive' | 'memo'>('analysis');
 
-    const companyName = analysisData?.consolidatedData?.companyInfo?.name || 'Startup Company';
-    const industry = analysisData?.consolidatedData?.companyInfo?.industry || 'Technology';
-    const description = analysisData?.consolidatedData?.companyInfo?.description || '';
-    const businessModel = analysisData?.consolidatedData?.companyInfo?.businessModel || '';
+    const companyName = analysisData?.consolidatedData?.companyOverview?.name || 'Startup Company';
+    const industry = analysisData?.consolidatedData?.companyOverview?.industry || 'Technology';
+    const description = analysisData?.consolidatedData?.product?.description || analysisData?.consolidatedData?.companyOverview?.description || '';
+    const businessModel = analysisData?.consolidatedData?.businessModel?.type || '';
+    const sector = analysisData?.sectorClassification?.sector || analysisData?.consolidatedData?.companyOverview?.sector || '';
 
     // Notify parent when active feature changes
     useEffect(() => {
@@ -61,6 +62,8 @@ export default function AIEnhancedAnalysisWrapper({
         setIsLoadingCompetitors(true);
         try {
             console.log('🔍 Loading competitive intelligence...');
+            console.log('📊 Sector:', sector);
+            console.log('🏢 Industry:', industry);
 
             const response = await fetch('/api/competitive-intelligence', {
                 method: 'POST',
@@ -69,7 +72,8 @@ export default function AIEnhancedAnalysisWrapper({
                     companyName,
                     industry,
                     description,
-                    businessModel
+                    businessModel,
+                    sector // Add sector to help find relevant competitors
                 })
             });
 

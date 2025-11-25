@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
         console.log('🔍 Starting AI competitive intelligence analysis...');
 
         const body = await request.json();
-        const { companyName, industry, productDescription, targetMarket } = body;
+        const { companyName, industry, description, businessModel, sector } = body;
 
         if (!companyName || !industry) {
             return NextResponse.json(
@@ -19,12 +19,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        console.log('📊 Analyzing competitors for sector:', sector || 'Not specified');
+
         // Perform AI-powered competitive analysis
         const analysis = await aiCompetitiveIntelligence.analyzeCompetitors(
             companyName,
             industry,
-            productDescription || '',
-            targetMarket || ''
+            description || '', // Use description field from frontend
+            businessModel || '', // Use businessModel as targetMarket
+            sector || '' // Pass sector to improve competitor discovery
         );
 
         return NextResponse.json({

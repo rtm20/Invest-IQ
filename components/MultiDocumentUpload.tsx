@@ -370,67 +370,92 @@ export default function MultiDocumentUpload() {
                 </p>
               </div>
 
-              {/* Key Features */}
+              {/* Key Features - Side by Side */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">What You Get:</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300 mb-4">What You Get:</h3>
 
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* FREE TIER */}
+                  <div className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 border-2 border-green-200 dark:border-green-600">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <span className="px-3 py-1 text-xs font-bold bg-green-600 text-white rounded-full">FREE</span>
+                      <h4 className="font-bold text-gray-900 dark:text-white">Core Features</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start space-x-2">
+                        <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Multi-Document Analysis</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Analyze multiple documents at once</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Investment Score (0-100)</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Data-driven score with breakdown</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Risk Assessment</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Identify risks and red flags</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Sector Benchmarking</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Compare vs top performers</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">Multi-Document Analysis</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Analyze multiple documents at once for comprehensive insights</p>
-                  </div>
-                </div>
 
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">Investment Score (0-100)</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Get a data-driven investment score with detailed breakdown</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">Risk Assessment</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Identify potential risks and red flags automatically</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">Sector Benchmarking</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Compare against top performers in the sector</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">Professional PDF Report</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Download a comprehensive investment report</p>
+                  {/* PRO TIER */}
+                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 border-2 border-yellow-400 dark:border-yellow-600 shadow-lg">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <span className="px-3 py-1 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full shadow-md">PRO</span>
+                      <h4 className="font-bold text-gray-900 dark:text-white">Premium Features</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start space-x-2">
+                        <svg className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Professional PDF Report</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Download comprehensive report</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <svg className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Competitive Intelligence</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">AI competitor analysis</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <svg className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">Investment Memo</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">VC-style investment memo</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -849,6 +874,11 @@ export default function MultiDocumentUpload() {
                               ? 'No PDF Available'
                               : 'Download Analysis Report (PDF)'}
                       </span>
+                      {activeAISection !== 'competitive' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900">
+                          PRO
+                        </span>
+                      )}
                     </button>
                     
                     <button

@@ -882,12 +882,27 @@ differs from Consumer Social (e.g., viral growth) or Enterprise SaaS (e.g., $20M
     );
     
     analysisResult.overallScore = overallScore;
+    
+    // Map overall score to consistent decision across the entire application
+    let consistentDecision: string;
+    if (overallScore >= 70) {
+      consistentDecision = 'Strong Invest';
+    } else if (overallScore >= 60) {
+      consistentDecision = 'Invest';
+    } else if (overallScore >= 50) {
+      consistentDecision = 'Maybe';
+    } else {
+      consistentDecision = 'Pass';
+    }
+    
+    // Override AI decision with score-based decision for consistency
     if (analysisResult.recommendation) {
+      analysisResult.recommendation.decision = consistentDecision;
       analysisResult.recommendation.overallScore = overallScore;
     }
     
     console.log('✅ Scores validated and calculated:');
-    console.log(`   Overall: ${overallScore}/100`);
+    console.log(`   Overall: ${overallScore}/100 → Decision: ${consistentDecision}`);
     console.log(`   Team: ${analysisResult.founderAnalysis?.score || 0}/20`);
     console.log(`   Market: ${analysisResult.marketAnalysis?.score || 0}/20`);
     console.log(`   Product: ${analysisResult.productAnalysis?.score || 0}/20`);

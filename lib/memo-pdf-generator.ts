@@ -507,21 +507,13 @@ export class InvestmentMemoPDFGenerator {
         // Recommendation color logic:
         // INVEST = Green (go ahead, positive)
         // MAYBE = Yellow (caution, needs consideration)
-        // PASS = Orange (stop, don't proceed)
+        // Decision colors - PASS = Red (don't invest)
         const decisionColors: { [key: string]: [number, number, number] } = {
             'Strong Invest': [22, 163, 74],   // Dark green - strong buy
             'Invest': [34, 197, 94],           // Green - buy
             'Maybe': [234, 179, 8],            // Yellow - hold/consider
-            'Reject': [239, 68, 68],           // Red - don't invest
-            'Pass': [239, 68, 68],             // Red (legacy support)
-            'Strong Reject': [220, 38, 38],    // Dark red - strong rejection
-            'Strong Pass': [220, 38, 38]       // Dark red (legacy support)
+            'Pass': [239, 68, 68],             // Red - don't invest
         };
-        
-        // Transform 'Pass' to 'Reject' for display
-        const displayDecision = memo.recommendation.decision === 'Pass' ? 'Reject' : 
-                               memo.recommendation.decision === 'Strong Pass' ? 'Strong Reject' : 
-                               memo.recommendation.decision;
         
         const decisionColor = decisionColors[memo.recommendation.decision] || [107, 114, 128];
         
@@ -532,7 +524,7 @@ export class InvestmentMemoPDFGenerator {
         this.pdf.setFont('helvetica', 'bold');
         this.pdf.setTextColor(255, 255, 255);
         this.pdf.text(
-            this.cleanText(displayDecision).toUpperCase(),
+            this.cleanText(memo.recommendation.decision).toUpperCase(),
             this.pageWidth / 2,
             this.yPos + 13,
             { align: 'center' }

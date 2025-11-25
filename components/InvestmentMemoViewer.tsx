@@ -104,14 +104,51 @@ export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMe
                         <h3 className="text-2xl font-bold text-gray-900 mb-6">Executive Summary</h3>
                         <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 p-8 rounded-2xl shadow-lg">
                             <div className="prose prose-lg max-w-none">
-                                <p className="text-gray-800 leading-relaxed text-lg font-light">
-                                    {memo.executiveSummary.split('\n\n').map((paragraph: string, idx: number) => (
-                                        <React.Fragment key={idx}>
-                                            {paragraph.replace(/\*\*/g, '')}
-                                            {idx < memo.executiveSummary.split('\n\n').length - 1 && <><br /><br /></>}
-                                        </React.Fragment>
-                                    ))}
-                                </p>
+                                {(() => {
+                                    // Handle case where executiveSummary might be a JSON string or object
+                                    let summaryText = memo.executiveSummary;
+                                    
+                                    // If it's an object or stringified JSON, try to extract meaningful text
+                                    if (typeof summaryText === 'object') {
+                                        summaryText = JSON.stringify(summaryText, null, 2);
+                                    }
+                                    
+                                    // Check if it looks like JSON
+                                    if (summaryText.trim().startsWith('{') || summaryText.trim().startsWith('[')) {
+                                        try {
+                                            const parsed = JSON.parse(summaryText);
+                                            // If it's an object with an executiveSummary property
+                                            if (parsed.executiveSummary) {
+                                                summaryText = parsed.executiveSummary;
+                                            } else {
+                                                // Just display the stringified version formatted
+                                                summaryText = JSON.stringify(parsed, null, 2);
+                                            }
+                                        } catch (e) {
+                                            // Not valid JSON, use as is
+                                        }
+                                    }
+                                    
+                                    // Split into paragraphs and render
+                                    const paragraphs = summaryText.split(/\n\n+/).filter(p => p.trim());
+                                    
+                                    return paragraphs.map((paragraph: string, idx: number) => {
+                                        // Parse markdown bold syntax (**text**) and render as bold
+                                        const parts = paragraph.split(/\*\*/);
+                                        
+                                        return (
+                                            <p key={idx} className="text-gray-800 leading-relaxed text-lg font-light mb-4">
+                                                {parts.map((part, partIdx) => (
+                                                    partIdx % 2 === 1 ? (
+                                                        <strong key={partIdx} className="font-bold text-gray-900">{part}</strong>
+                                                    ) : (
+                                                        <span key={partIdx}>{part}</span>
+                                                    )
+                                                ))}
+                                            </p>
+                                        );
+                                    });
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -374,8 +411,8 @@ export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMe
 
                         <div className={`${getRecommendationColor(memo.recommendation.decision)} p-10 rounded-2xl shadow-2xl text-center transform hover:scale-105 transition-transform`}>
                             {(() => {
-                                const decision = memo.recommendation.decision === 'Pass' ? 'Reject' : memo.recommendation.decision;
-                                if (decision === 'Reject' || decision === 'Strong Reject') {
+                                const decision = memo.recommendation.decision;
+                                if (decision === 'Pass') {
                                     return <XCircle className="h-20 w-20 mx-auto mb-4 animate-pulse" />;
                                 } else if (decision === 'Maybe') {
                                     return <AlertCircle className="h-20 w-20 mx-auto mb-4 animate-pulse" />;
@@ -383,7 +420,7 @@ export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMe
                                     return <CheckCircle className="h-20 w-20 mx-auto mb-4 animate-pulse" />;
                                 }
                             })()}
-                            <div className="text-5xl font-bold mb-3">{memo.recommendation.decision === 'Pass' ? 'Reject' : memo.recommendation.decision}</div>
+                            <div className="text-5xl font-bold mb-3">{memo.recommendation.decision}</div>
                             <div className="text-xl opacity-95">AI Investment Recommendation</div>
                         </div>
 

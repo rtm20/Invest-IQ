@@ -44,17 +44,20 @@ class AICompetitiveIntelligenceEngine {
     companyName: string,
     industry: string,
     productDescription: string,
-    targetMarket: string
+    targetMarket: string,
+    sector?: string
   ): Promise<CompetitiveAnalysis> {
     try {
       console.log('🔍 Starting AI Competitive Intelligence Analysis...');
+      console.log('📊 Sector:', sector || 'Not specified');
       
       // Step 1: Discover competitors using Google Custom Search
       const competitors = await this.discoverCompetitors(
         companyName,
         industry,
         productDescription,
-        targetMarket
+        targetMarket,
+        sector
       );
 
       // Step 2: Analyze each competitor with AI (BATCH - 1 API call)
@@ -95,10 +98,12 @@ class AICompetitiveIntelligenceEngine {
     companyName: string,
     industry: string,
     productDescription: string,
-    targetMarket: string
+    targetMarket: string,
+    sector?: string
   ): Promise<string[]> {
     try {
       console.log('🔎 Discovering competitors via Google Custom Search...');
+      console.log('📊 Using sector:', sector || 'generic industry search');
 
       // Use Google Custom Search API
       const searchApiKey = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
@@ -108,18 +113,57 @@ class AICompetitiveIntelligenceEngine {
           searchApiKey === 'your_google_api_key_here' ||
           searchEngineId === 'your_search_engine_id_here') {
         console.log('⚠️ Google Custom Search not configured - using AI-generated competitors');
-        return await this.generateCompetitorsWithAI(industry, targetMarket);
+        return await this.generateCompetitorsWithAI(industry, targetMarket, sector);
       }
 
-      // More specific query to find actual companies, not conferences/articles
-      const query = `"${industry}" startup companies "${targetMarket}" competitors -conference -event -summit -news -article`;
+      // Use sector if available for more targeted search, combined with product description
+      // Example: "student gig work" + "Marketplace" gives better results than just "Marketplace"
+      let searchTerm = '';
+      if (productDescription && productDescription.length > 20) {
+        // Extract key business concept from description
+        // Look for key phrases that define the business model
+        const desc = productDescription.toLowerCase();
+        
+        // Common business model keywords to prioritize
+        const businessKeywords = [
+          'student gig', 'freelance', 'marketplace', 'e-commerce', 'fintech', 'healthtech',
+          'edtech', 'saas', 'b2b', 'b2c', 'social network', 'platform', 'gig work',
+          'food delivery', 'ride sharing', 'job board', 'recruitment', 'learning'
+        ];
+        
+        // Find matching business model keywords
+        const matchedKeywords = businessKeywords.filter(kw => desc.includes(kw));
+        
+        if (matchedKeywords.length > 0) {
+          // Use the first matched keyword + sector for better results
+          searchTerm = sector ? `${matchedKeywords[0]} ${sector} india` : `${matchedKeywords[0]} startup india`;
+        } else {
+          // Extract first 3-4 meaningful words from description
+          const descWords = productDescription
+            .replace(/[^\w\s]/g, ' ')
+            .split(' ')
+            .filter(w => w.length > 3)
+            .slice(0, 4)
+            .join(' ');
+          searchTerm = sector ? `${descWords} ${sector}` : descWords || industry;
+        }
+        
+        console.log('📝 Extracted search term from description:', searchTerm);
+      } else {
+        searchTerm = sector || industry;
+      }
+      
+      const query = `"${searchTerm}" startup companies competitors -conference -event -summit -news -article -list -"top 10"`;
       const url = `https://www.googleapis.com/customsearch/v1?key=${searchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=10`;
+      
+      console.log('🔍 Search query:', query);
+      console.log('📄 Product description used:', productDescription.substring(0, 100));
       
       const response = await fetch(url);
       
       if (!response.ok) {
         console.error('❌ Google Search API error:', response.status);
-        return await this.generateCompetitorsWithAI(industry, targetMarket);
+        return await this.generateCompetitorsWithAI(industry, targetMarket, sector);
       }
       
       const data = await response.json();
@@ -163,7 +207,8 @@ class AICompetitiveIntelligenceEngine {
         const validatedCompetitors = await this.validateCompetitorsWithAI(
           potentialCompetitors.map((c: { name: string; snippet: string }) => ({ name: c.name, description: c.snippet })),
           industry,
-          targetMarket
+          targetMarket,
+          sector
         );
         
         if (validatedCompetitors.length > 0) {
@@ -173,10 +218,10 @@ class AICompetitiveIntelligenceEngine {
       }
       
       console.log('⚠️ No valid competitors found in search results, using AI generation...');
-      return await this.generateCompetitorsWithAI(industry, targetMarket);
+      return await this.generateCompetitorsWithAI(industry, targetMarket, sector, productDescription);
     } catch (error) {
       console.error('❌ Competitor discovery failed:', error);
-      return await this.generateCompetitorsWithAI(industry, targetMarket);
+      return await this.generateCompetitorsWithAI(industry, targetMarket, sector, productDescription);
     }
   }
 
@@ -186,10 +231,12 @@ class AICompetitiveIntelligenceEngine {
   private async validateCompetitorsWithAI(
     candidates: { name: string; description: string }[],
     industry: string,
-    targetMarket: string
+    targetMarket: string,
+    sector?: string
   ): Promise<string[]> {
     try {
-      const prompt = `You are analyzing potential competitors in the ${industry} industry targeting ${targetMarket}.
+      const sectorInfo = sector ? ` in the ${sector} sector` : '';
+      const prompt = `You are analyzing potential competitors in the ${industry} industry${sectorInfo} targeting ${targetMarket}.
 
 Below is a list of candidates from search results. Some are actual companies, some are conferences, events, or article titles.
 
@@ -223,15 +270,33 @@ RETURN ONLY THE JSON ARRAY, NO OTHER TEXT.`;
   /**
    * Generate competitor names using AI when search is unavailable
    */
-  private async generateCompetitorsWithAI(industry: string, targetMarket: string): Promise<string[]> {
+  private async generateCompetitorsWithAI(industry: string, targetMarket: string, sector?: string, productDescription?: string): Promise<string[]> {
     try {
-      const prompt = `List 3-5 typical competitors in the ${industry} industry targeting ${targetMarket}. 
-Return only company names as a JSON array: ["Company 1", "Company 2", "Company 3"]`;
+      const sectorInfo = sector ? ` specifically in the ${sector} sector` : '';
+      const productInfo = productDescription ? `\n\nProduct/Service Description: ${productDescription}` : '';
       
-      const response = await this.callGemini(prompt, 200, 0.7);
+      const prompt = `You are a competitive intelligence expert. List 4-5 REAL, EXISTING startup competitors.
+
+Industry: ${industry}${sectorInfo}
+Target Market: ${targetMarket}${productInfo}
+
+CRITICAL REQUIREMENTS:
+- Return ONLY direct competitors that offer similar products/services
+- Must be REAL companies (not generic giants like Amazon, eBay unless they have a specific relevant product line)
+- NO conferences, events, or news articles
+- Focus on startups and mid-size companies in the SAME niche
+- If the product is about "student gig work" or "youth monetization", find competitors in freelance/gig platforms for students
+- If the product is about "e-commerce", find e-commerce startups in the same category
+
+Return ONLY a JSON array of company names: ["Company 1", "Company 2", "Company 3", "Company 4"]
+
+NO additional text, just the JSON array.`;
+      
+      const response = await this.callGemini(prompt, 300, 0.7);
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         const competitors = JSON.parse(jsonMatch[0]);
+        console.log('✅ AI-generated competitors:', competitors);
         return competitors.slice(0, 5);
       }
     } catch (error) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { generateInvestmentMemoPDF } from '../../../lib/memo-pdf-generator';
+import { generateInvestmentMemoPDF } from '../../../lib/memo-pdf-generator';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -17,29 +17,24 @@ export async function POST(request: NextRequest) {
 
     console.log('📄 Generating Investment Memo PDF for:', companyName);
 
-    // Generate PDF - temporarily disabled until memo-pdf-generator is fixed
-    // const pdfBlob = await generateInvestmentMemoPDF(memo, companyName);
-    
-    return NextResponse.json(
-      { error: 'PDF generation temporarily unavailable' },
-      { status: 503 }
-    );
+    // Generate PDF
+    const pdfBlob = await generateInvestmentMemoPDF(memo, companyName);
     
     // Convert blob to buffer
-    // const arrayBuffer = await pdfBlob.arrayBuffer();
-    // const buffer = Buffer.from(arrayBuffer);
+    const arrayBuffer = await pdfBlob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    // console.log('✅ Investment Memo PDF generated successfully');
+    console.log('✅ Investment Memo PDF generated successfully');
 
     // Return PDF as response
-    // return new NextResponse(buffer, {
-    //   status: 200,
-    //   headers: {
-    //     'Content-Type': 'application/pdf',
-    //     'Content-Disposition': `attachment; filename="${companyName.replace(/[^a-zA-Z0-9]/g, '_')}_Investment_Memo.pdf"`,
-    //     'Content-Length': buffer.length.toString(),
-    //   },
-    // });
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${companyName.replace(/[^a-zA-Z0-9]/g, '_')}_Investment_Memo.pdf"`,
+        'Content-Length': buffer.length.toString(),
+      },
+    });
   } catch (error) {
     console.error('❌ Investment Memo PDF generation error:', error);
     return NextResponse.json(

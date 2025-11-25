@@ -79,7 +79,7 @@ export default function ScoreTransparency({ overallScore, breakdown, industryAve
             </span>
           ))}
           <span className="ml-3 text-sm text-gray-600">
-            {overallScore >= 80 ? 'Strong Invest' : overallScore >= 60 ? 'Consider' : 'Reject'}
+            {overallScore >= 70 ? 'Strong Invest' : overallScore >= 60 ? 'Invest' : overallScore >= 50 ? 'Maybe' : 'Pass'}
           </span>
         </div>
       </div>

@@ -58,6 +58,31 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
   // Extract scores from analysis - ALL from Gemini AI API
   const overallScore = analysis?.recommendation?.score || analysis?.overallScore || 0;
   
+  // Client-side failsafe: Override decision if it's inconsistent with score
+  const getConsistentDecision = (score: number, originalDecision: string) => {
+    // Score-based decision (consistent with backend)
+    let scoreBasedDecision: string;
+    if (score >= 70) {
+      scoreBasedDecision = 'Strong Invest';
+    } else if (score >= 60) {
+      scoreBasedDecision = 'Invest';
+    } else if (score >= 50) {
+      scoreBasedDecision = 'Maybe';
+    } else {
+      scoreBasedDecision = 'Pass';
+    }
+    
+    // Use score-based decision if original is inconsistent or uses old terminology
+    const normalizedOriginal = originalDecision?.toLowerCase();
+    if (normalizedOriginal === 'reject' || !originalDecision) {
+      return scoreBasedDecision;
+    }
+    
+    return originalDecision;
+  };
+  
+  const displayDecision = getConsistentDecision(overallScore, analysis?.recommendation?.decision);
+  
   // Use REAL scores from API analysis - no calculations!
   const scores = {
     overall: overallScore,
@@ -221,9 +246,9 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
               className="bg-white border-2 rounded-xl p-6 text-center shadow-sm hover:shadow-lg hover:border-blue-400 transition-all cursor-pointer group"
             >
               <div className={`inline-flex px-4 py-2 rounded-full text-sm font-bold border-2 mb-3 ${
-                getRecommendationColor(analysis?.recommendation?.decision)
+                getRecommendationColor(displayDecision)
               }`}>
-                {(analysis?.recommendation?.decision || analysis?.recommendation || 'PENDING').toUpperCase()}
+                {displayDecision.toUpperCase()}
               </div>
               <div className="text-4xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
                 {scores.overall}/100
@@ -323,9 +348,9 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
           className="bg-white border-2 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-indigo-400"
         >
           <div className={`inline-flex px-4 py-2 rounded-full text-sm font-bold border-2 mb-3 ${
-            getRecommendationColor(analysis?.recommendation?.decision)
+            getRecommendationColor(displayDecision)
           }`}>
-            {(analysis?.recommendation?.decision || analysis?.recommendation || 'PENDING').toUpperCase()}
+            {displayDecision.toUpperCase()}
           </div>
           <div className="text-3xl font-bold text-gray-900 mb-1">
             {scores.overall}/100
@@ -958,6 +983,9 @@ export default function EnhancedAnalysisResults({ analysisData, onNewAnalysis, v
           )}
           <span>
             {isGeneratingPDF ? 'Generating PDF Report...' : 'Download Professional Report (PDF)'}
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900">
+            PRO
           </span>
         </button>
       </div>
