@@ -61,7 +61,7 @@ interface InvestmentMemo {
         liquidationPreference: string;
     };
     recommendation: {
-        decision: 'Strong Reject' | 'Reject' | 'Maybe' | 'Invest' | 'Strong Invest';
+        decision: 'Pass' | 'Maybe' | 'Invest' | 'Strong Invest';
         reasoning: string;
         nextSteps: string[];
         timeline: string;
@@ -156,6 +156,12 @@ Write a compelling 3-4 paragraph executive summary that covers:
 2. Key traction and metrics
 3. Investment opportunity and potential returns
 4. Your recommendation
+
+IMPORTANT FORMATTING RULES:
+- Use **bold** markdown syntax around key metrics, numbers, and critical points (e.g., **$5M revenue**, **300% growth**, **Series A**, **$85M valuation**)
+- Bold company names, funding rounds, important partnerships, and market sizes
+- Bold the investment recommendation and key decision factors
+- Do NOT bold common words - only highlight truly important information
 
 Write in a professional, confident tone. Be specific with numbers and metrics.`;
 
@@ -382,8 +388,11 @@ RETURN ONLY THE JSON OBJECT, NO ADDITIONAL TEXT OR EXPLANATIONS.`;
      * Generate Recommendation
      */
     private async generateRecommendation(analysisData: any, companyName: string): Promise<any> {
-        const score = analysisData?.analysis?.recommendation?.score || 75;
-        const decision = score >= 85 ? 'Strong Invest' : score >= 70 ? 'Invest' : score >= 55 ? 'Maybe' : 'Reject';
+        // Use the overall score from analysis, or fallback to recommendation score
+        const score = analysisData?.analysis?.overallScore || analysisData?.analysis?.recommendation?.overallScore || analysisData?.analysis?.recommendation?.score || 75;
+        
+        // Consistent decision thresholds across entire application
+        const decision = score >= 70 ? 'Strong Invest' : score >= 60 ? 'Invest' : score >= 50 ? 'Maybe' : 'Pass';
 
         const prompt = `You are a VC partner making a final investment recommendation.
 
