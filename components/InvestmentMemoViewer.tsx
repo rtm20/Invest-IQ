@@ -130,7 +130,7 @@ export default function InvestmentMemoViewer({ memo, companyName }: InvestmentMe
                                     }
                                     
                                     // Split into paragraphs and render
-                                    const paragraphs = summaryText.split(/\n\n+/).filter(p => p.trim());
+                                    const paragraphs = summaryText.split(/\n\n+/).filter((p: string) => p.trim());
                                     
                                     return paragraphs.map((paragraph: string, idx: number) => {
                                         // Parse markdown bold syntax (**text**) and render as bold
